@@ -8,11 +8,11 @@ Built with a **FastAPI Backend-for-Frontend (BFF)** proxy architecture, a **Goog
 
 ---
 
-## 📸 Interactive Multi-Engine & Targeted Grounding Chat Space
+## 📸 Interactive Multi-Engine & Dual-Mode Datastore Switches Chat Space
 
-| 📦 Emerald-Glowing Active Datastore Filter Card | 🛠️ Dynamic Coordinated Tools Event Console |
+| 📦 Emerald-Glowing Agent Filter Card | 🛠️ Dynamic REST datastore Query parameters Payload |
 | :--- | :--- |
-| ![Grounded Data Stores Panel](docs/assets/datastore_green_filter.png) | ![REST HTTP Logs Panel](docs/assets/agent_logs_console.png) |
+| ![Grounded Data Stores Panel](docs/assets/ai_coordinator_filter_on.png) | ![REST HTTP Logs Panel](docs/assets/datastore_filter_payload.png) |
 
 ---
 
@@ -20,9 +20,9 @@ Built with a **FastAPI Backend-for-Frontend (BFF)** proxy architecture, a **Goog
 
 The visual verification walkthrough sequence is documented under **[WALKTHROUGH.md](file:///Users/sokratis/Documents/Code/0_playground/WALKTHROUGH.md)**. 
 
-Open **[datastore_filter_demo.webp](file:///Users/sokratis/Documents/Code/0_playground/docs/assets/datastore_filter_demo.webp)** to see the animation of our full-stack targeted explorer: toggling search rooms modes, selecting `gemini-enterprise-e2e` engine, clicking e2e-bucket datastore cards to trigger glowing **mint-emerald active-filter card overlays, restricted placeholders text and warning balloons**, submitting direct searches to `/api/chat/datastore` logging dynamic requests consoles live, de-selecting target filters, switching to AI Coordinator agentic room selection deck, entering targeted GCS datasource prompts, and monitoring real-time **`query_selected_datastore`** tool choice warn badges!
+Open **[datastore_switch_demo.webp](file:///Users/sokratis/Documents/Code/0_playground/docs/assets/datastore_switch_demo.webp)** to see the animation of our full-stack targeted explorer: toggling search spaces rooms modes, selecting engine indexes cards, clicking dynamic datastore items to **turn visual frosted selectors switches ON and OFF under both Direct Search and AI Coordinator agent modes**, monitoring text overlays and dynamic warning alert banners updates, entering comparative revenue prompts, logging dynamic targeted payload parameters inside request consoles, tracing chunk logs under model **`gemini-3.5-flash`**, and outputting comparative revenues summaries tables!
 
-![Grounded Datastore filter targeted stream Recording](docs/assets/datastore_filter_demo.webp)
+![Grounded Datastore selector switches toggling stream Recording](docs/assets/datastore_switch_demo.webp)
 
 ---
 

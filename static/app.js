@@ -474,7 +474,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 const resolvedSessionId = activeSessionPath || `session_hash_${Math.random().toString(36).substring(2, 15)}`;
                 
                 let sseQueryText = query;
-                if (activeEngine.id !== "space_hub_coordinator") {
+                if (activeDatastoreFilterId) {
+                    // Inject targeted datastore context override envelope to focus the ADK Agent!
+                    let parentEngineId = activeEngine.id;
+                    let parentEngineName = activeEngine.display_name;
+                    
+                    if (parentEngineId === "space_hub_coordinator") {
+                        const matchedEng = discoveredEnginesArray.find(e => e.data_store_ids.includes(activeDatastoreFilterId));
+                        if (matchedEng) {
+                            parentEngineId = matchedEng.id;
+                            parentEngineName = matchedEng.display_name;
+                        }
+                    }
+                    
+                    sseQueryText = 
+                        `[System Context: The user has applied a target datasource constraint, restricting search GROUNDING strictly and exclusively inside datastore ID '${activeDatastoreFilterId}' (which belongs to search engine '${parentEngineName}', ID '${parentEngineId}'). ` +
+                        `You MUST query documents STRICTLY inside this target datastore ID by always triggering the 'query_selected_datastore' tool (passing engine_id='${parentEngineId}' and datastore_id='${activeDatastoreFilterId}') for all search operations!]\n\n` +
+                        `User Query: ${query}`;
+                } else if (activeEngine.id !== "space_hub_coordinator") {
                     // Inject target coordinated engine envelope to focus the ADK Agent!
                     sseQueryText = 
                         `[System Context: You are currently connected to the search engine '${activeEngine.display_name}' (ID: '${activeEngine.id}'). ` +
@@ -1219,28 +1236,45 @@ document.addEventListener("DOMContentLoaded", () => {
             
             card.appendChild(meta);
             
-            // If direct search mode is active, bind active datastore filter toggle!
-            card.style.cursor = currentActiveMode === "direct" ? "pointer" : "default";
+            // Mount a frosted-glass sliding switch toggle orb badge!
+            const toggleSwitch = document.createElement("div");
+            toggleSwitch.className = "ds-toggle-switch";
+            const toggleOrb = document.createElement("div");
+            toggleOrb.className = "ds-toggle-orb";
+            toggleSwitch.appendChild(toggleOrb);
+            card.appendChild(toggleSwitch);
+            
+            // Allow card filtering selection clicks in BOTH explorer modes!
+            card.style.cursor = "pointer";
             
             // Check if this card represents the active filter on redraw!
-            if (currentActiveMode === "direct" && activeDatastoreFilterId === dsId) {
+            if (activeDatastoreFilterId === dsId) {
                 card.classList.add("active-filter");
             }
             
             card.addEventListener("click", () => {
-                if (currentActiveMode !== "direct") return;
-                
                 if (activeDatastoreFilterId === dsId) {
-                    // De-select!
+                    // De-select card filter!
                     activeDatastoreFilterId = null;
                     card.classList.remove("active-filter");
-                    inputQuery.placeholder = `Ask ${activeEngine.display_name} anything...`;
-                    showSystemMessage(`Targeted datastore filter cleared. Grounding search restored to cover all connected databases.`);
+                    
+                    // Restore visual placeholder depending on explorer mode active
+                    if (currentActiveMode === "agentic") {
+                        if (activeEngine.id === "space_hub_coordinator") {
+                            inputQuery.placeholder = "Ask the Space Hub AI Coordinator anything...";
+                        } else {
+                            inputQuery.placeholder = `Ask the Space Hub Coordinator about search space ${activeEngine.display_name}...`;
+                        }
+                    } else {
+                        inputQuery.placeholder = `Ask ${activeEngine.display_name} anything...`;
+                    }
+                    showSystemMessage(`Targeted datastore filter cleared. Grounding search restored to cover all private datasets.`);
                 } else {
                     // Select target datastore filter!
                     activeDatastoreFilterId = dsId;
                     document.querySelectorAll(".datastore-item-card").forEach(c => c.classList.remove("active-filter"));
                     card.classList.add("active-filter");
+                    
                     inputQuery.placeholder = `Searching strictly inside data source '${cleanTitle}'...`;
                     showSystemMessage(`Grounded search target restricted to private data source: '${cleanTitle}' exclusive.`);
                 }

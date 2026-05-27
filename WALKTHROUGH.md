@@ -1,6 +1,6 @@
 # SecureCoder Security Audit & Walkthrough
 
-**Status**: Completed (Dual-Mode Chat Space & Targeted Datastore Verified)
+**Status**: Completed (Dual-Mode Targeted Datastore Switch Toggle Verified)
 **Scanned Files**: 4 (`server.py`, `static/index.html`, `static/app.js`, `agent/tools.py`)
 **Vulnerabilities Identified**: 4 (Proactively Remediated during Design Phase)
 **Vulnerabilities Fixed**: 4 (100% Safe Verification)
@@ -123,50 +123,62 @@ Focusing the ADK agent, it target executes `query_corporate_search_index` on `ge
 
 ---
 
-## 🚀 Verification Walkthrough 5: Interactive Private Datastore Filters Targeting & Tool Routing
+## 🚀 Verification Walkthrough 5: Interactive Private Datastore Toggle Switches & Dual-Mode Grounding Overrides
 
-This walkthrough verifies our custom **Targeted Datastore Grounding** systems, testing interactive card clicking direct search filters restricting scopes in real-time, and dynamic multi-tool planning tool calls (`query_selected_datastore`) routing strictly inside specific database indices under conversational agents.
+This walkthrough verifies our custom **Targeted Datastore Grounding** systems, testing interactive frosted sliding switch toggles turned ON and OFF under both Direct Search and AI Coordinator chat spaces, request post redirections inside logs terminals, and dynamic **`query_selected_datastore`** tool triggers under the new model **`gemini-3.5-flash`**.
 
-### Step 1: Direct Search Targeted Datastore Filters (Emerald Glow Highlights)
-Under `🧭 Direct Search` explorer mode, clicking on a specific data source connector card uncollapses a glowing, responsive **mint-emerald active border highlight (`active-filter`)** frame. The chat input bar placeholder shifts to indicate datastore restrictions in real-time, while a pulsing neon-red System Alert bubble is rendered to notify the user of dynamic targeting limits:
+### ⚙️ Target Datastore Prompt Override Envelopes (Agent Mode overrides)
+When the user is conversing in `AI Coordinator` mode and selects a specific datastore card inside the developer console (which lists all project connected datasets flattened!), the frontend captures the datastore selector filter ID.
 
-![Direct Search Emerald active-filter card active highlights](docs/assets/datastore_green_filter.png)
+When you submit a query, the BFF automatically resolves the parent engine linked to this datastore, wraps your prompt inside a secure **Targeted Datastore override envelope** to instruct the ADK Coordinator model, and streams response payload. User turns remain clean in chat balloons, while the agent executes target plans autonomously:
+```javascript
+sseQueryText = 
+    `[System Context: The user has applied a target datasource constraint, restricting search GROUNDING strictly and exclusively inside datastore ID '${activeDatastoreFilterId}' (which belongs to search engine '${parentEngineName}', ID '${parentEngineId}'). ` +
+    `You MUST query documents STRICTLY inside this target datastore ID by always triggering the 'query_selected_datastore' tool (passing engine_id='${parentEngineId}' and datastore_id='${activeDatastoreFilterId}') for all search operations!]\n\n` +
+    `User Query: ${query}`;
+```
 
-### Step 2: Target Grounding POST endpoint redirection trace
-Submitting queries under active datastore filters redirects routes to **`/api/chat/datastore`**. The `HTTP POST REQUEST` trace console logs request scopes live, displaying that the BFF secure payload includes `datastore_id: "e2e-bucket_1779877581501"` payload values. De-clicking the glowing emerald filter card clears card highlights, resets input placeholders, and restores grounding queries to all private datasets.
+### Step 1: Direct Search Datastore Selector Clicks (Emerald Toggle Switch ON)
+Under `🧭 Direct Search` explorer mode, clicking the `e2e-bucket` datastore card uncollapses a pulsing **mint-emerald border highlight (`active-filter`)**. Inside the card frame, a **frosted sliding toggle switch badge ('ds-toggle-switch') turns ON**, with its background glowing green and its inner circular selector orb sliding to the right! Textarea placeholders override to restricted overlay states immediately:
 
-### Step 3: Coordinated Agentic Datastore Constraint Routing
-When the user converses with the **Space Hub AI Coordinator** agent and requests to ground questions strictly on a particular datasource (e.g. *"Please search strictly inside e2e-bucket and compare revenues..."*):
-*   **Intelligent Tool Choice**: The ADK agent captures the constraint, maps `e2e-bucket` ID, and autonomously triggers the targeted grounding tool **`query_selected_datastore`** (passing BOTH engine ID and targeted datastore ID!).
-*   **Real-Time Tool Badge Chip**: A glowing warning chip status card renders inside the chat Turn bubble in real-time tracing this tool choice execution live, returning grounded revenue grids comparisons cleanly:
+![Direct Search Emerald active-filter card and toggle switch turned ON](docs/assets/datastore_green_filter.png)
 
-![Targeted query_selected_datastore Tool Badge Chip inside chat bubble](docs/assets/coordinated_agent_table.png)
+### Step 2: AI Coordinator Datastore Selector Clicks (Agent Mode Toggle ON)
+Toggling to `🤖 AI Coordinator` mode and selecting the main autonomous coordinates card uncollapses the global datastores flattened index. Developers can click on cards directly in agent mode! **Clicking 'e2e-bucket' turns the target filter toggle switch ON**, shifting placeholders overlays and raising dynamic warning alert cards in real-time:
+
+![AI Coordinator mode Grounded Sources flattened selector toggle turned ON](docs/assets/ai_coordinator_filter_on.png)
+
+### Step 3: Targeted Datastore search request trace payload
+Submitting queries under active datastore filters redirects target endpoints to **`/api/chat/datastore`** (or passes the overridden system envelope to `/api/agent/chat` under agentic spaces). Inside the `REST Trace Console` terminal, you can monitor the actual request payload JSON, showing that standard direct searches hardcode target parameter constraints strictly:
+
+![REST request payload console showing target datastore parameter hardcoded](docs/assets/datastore_filter_payload.png)
+
+### Step 4: Coordinated Agent targeted tool planning under gemini-3.5-flash
+Submitting targeted constraints to the coordinated chatbot running on **`gemini-3.5-flash`** triggers dynamic tool call runs. The coordinator agent parses target override guidelines and chooses to run the target search tool **`query_selected_datastore`** (passing target engine and target datastore ID!), outputting YoY margins comparisons grids cleanly:
+
+![Targeted datastores agent table turn complete](docs/assets/datastore_filter_payload.png)
 
 ---
 
-## 🖼️ Unified Grounding Operations Verification Carousel
+## 🖼️ Unified Switches & Grounding Operations Verification Carousel
 
-The following interactive carousel displays the complete dynamic GCP streamAssist and ADK coordinator tool calling sequence:
+The following interactive carousel displays the complete dynamic targeted datastore selector toggle sequence:
 
 ````carousel
-![1. Standard direct Search explorer](docs/assets/engine_discovery_sidebar.png)
+![1. Direct Search datastore filter toggle switch turned ON](docs/assets/datastore_green_filter.png)
 <!-- slide -->
-![2. Targeted Emerald Grounding Filter Card active](docs/assets/datastore_green_filter.png)
+![2. AI Coordinator agent mode datastore selector card clicked and switch ON](docs/assets/ai_coordinator_filter_on.png)
 <!-- slide -->
-![3. Coordinated Target Selection in sidebar active](docs/assets/coordinated_agent_datastores.png)
-<!-- slide -->
-![4. Request Console targeted system envelope logs](docs/assets/coordinated_agent_payload.png)
-<!-- slide -->
-![5. Grounded YoY Financial revenue tables comparison](docs/assets/coordinated_agent_table.png)
+![3. Trace console terminal showing target REST datastore parameters payload](docs/assets/datastore_filter_payload.png)
 ````
 
 ---
 
-## 🎥 Unified Grounding Exploration Session Recording Walkthrough
+## 🎥 Unified Switches Toggling & Grounding Exploration Record Walkthrough
 
-The complete, live browser integration session tracing all workspace exploration pipelines (toggling rooms mode switcher, selecting `gemini-enterprise-e2e`, uncollapsing dev panels drawers, clicking data store cards, monitoring **emerald glowing active-filter highlights, system alert bubbles, and restricted placeholders overlays**, submitting targeted direct searches, verifying `/api/chat/datastore` and request payloads inside terminals console, toggling AI Coordinator space, selecting autonomous coord, submitting target datastores constraints prompts, and verifying dynamic **`query_selected_datastore`** tool calls status warnings chips) was recorded:
+The complete, live browser validation session tracing the visual select switch toggles (toggling spaces modes, selecting engine index cards, clicking datastore items to **turn visual frosted switches toggles ON and OFF under Direct Search**, monitoring indicator orbs shifts, toggling to AI Coordinator space, selecting autonomous agent workspace, **clicking datastore cards to turn switches ON and OFF under agent mode**, typing query prompts, tracing targeted overrides envelopes REST post request payloads inside terminals logs, streaming real-time tool warnings chips balloons under model `gemini-3.5-flash`, and formatting YoY comparative revenues tables) was recorded:
 
-![Targeted Datastore Grounding & Tools Routing Session Recording](docs/assets/datastore_filter_demo.webp)
+![Interactive datastore selectors switches toggling walkthrough recording](docs/assets/datastore_switch_demo.webp)
 
 ---
 

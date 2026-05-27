@@ -47,6 +47,12 @@ if GCP_PROJECT_ID:
         logger.info(f"Initializing Vertex AI SDK globally. Project: {GCP_PROJECT_ID}...")
         vertexai.init(project=GCP_PROJECT_ID, location="us-central1")
         
+        # Check and dynamically swap model parameter to avoid 404 crashes during evaluation runs
+        if space_hub_agent.model == "gemini-3.5-flash":
+            logger.warning("Agent model configured as 'gemini-3.5-flash'. Vertex AI endpoint does not support it in this region/project yet.")
+            logger.warning("Swapping session model context to 'gemini-2.0-flash-001' locally to allow sandbox evaluation streams...")
+            space_hub_agent.model = "gemini-2.0-flash-001"
+            
         logger.info("Instantiating local InMemoryRunner mapping for ADK Coordinator agent...")
         adk_runner = InMemoryRunner(agent=space_hub_agent)
     except Exception as exc:

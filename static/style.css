@@ -1578,7 +1578,50 @@ body {
     transform: translateY(-2px) scale(1.01);
 }
 
+.datastore-item-card.active-filter::before {
+    background: #34d399 !important;
+    box-shadow: 0 0 10px #34d399 !important;
+}
+
 .datastore-item-card.active-filter .ds-icon-box {
     background: rgba(52, 211, 153, 0.22) !important;
     color: #34d399 !important;
+}
+
+/* 🎛️ Premium Glassmorphic Sliding Select Switch Toggle Switch styling */
+.ds-toggle-switch {
+    width: 36px;
+    height: 18px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    align-self: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.ds-toggle-orb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Selector ON States highlights override */
+.datastore-item-card.active-filter .ds-toggle-switch {
+    background: rgba(52, 211, 153, 0.18) !important;
+    border-color: rgba(52, 211, 153, 0.4) !important;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.1) !important;
+}
+
+.datastore-item-card.active-filter .ds-toggle-orb {
+    transform: translateX(18px);
+    background: #34d399 !important;
+    box-shadow: 0 0 6px rgba(52, 211, 153, 0.6) !important;
 }
