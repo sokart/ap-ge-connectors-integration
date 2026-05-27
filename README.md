@@ -37,7 +37,7 @@ To completely neutralize risk and comply with standard enterprise token protecti
 TALK to an advanced corporate coordinator agent directly using natural conversational language.
 *   **Local InMemoryRunner Streaming**: FastAPI lazy-loads and instantiates the `google.adk.runners.InMemoryRunner` locally. Traces actual python GenAI Event dictionaries chunk-by-chunk directly into the browser logs response console in real-time.
 *   **Dynamic Tool Calling & Warnings Balloons**: Integrates the agent with standard docstring-mapped Python tools. If the agent makes intermediate decisions to list search spaces or query document databases, a custom glowing tool calling status chip renders inside the chat stream in real-time: `🤖 Space Hub Coordinator: [Invoking Tool...]`.
-*   **Decoupled Cycles Resolution (Deferred Imports)**: Resolves modular startup dependencies circular dependency locks by implementing deferred imports within tool runtimes, ensuring complete server startup stability.
+*   **Prism Architectural Decoupling (Shared `util.py` Library)**: Extracted all GCP credentials resolutions, listing engines API mappings, and streamAssist transcode generator methods into a shared, centralized, stateless utilities library **`util.py`**. This completely decouples local ADK Agent tools and CLI test scripts, letting them statically import functions directly on top of the files with zero port loopbacks or circular dependency locks!
 
 ### 3. Dynamic Datastore Routing Engine
 Bypassing the traditional several-hours latency during console sync states:
@@ -66,10 +66,11 @@ To securely parse and syntax-color JSON strings and payloads without using hazar
 
 ## 📂 Core Workspaces Code Map
 
-*   ⚙️ **[server.py](file:///Users/sokratis/Documents/Code/0_playground/server.py)**: Secure FastAPI BFF backend microservice. Handles CORS authorizations middlewares, secure headers injection, engines metadata dynamic mapping list discovery, API requests masking, and gRPC compact REST stream SSE transcoding generator.
+*   ⚙️ **[server.py](file:///Users/sokratis/Documents/Code/0_playground/server.py)**: Secure FastAPI BFF backend microservice. Handles CORS authorizations middlewares, secure headers injection, session configurations, and local ADK agent runner SSE transcoding loops. Delegated API proxyings completely to `util.py`.
+*   ⚙️ **[util.py](file:///Users/sokratis/Documents/Code/0_playground/util.py)**: Centralized, authenticated GCP credentials and streamAssist transcode generator library. Coordinates Application Default Credentials (ADC) token refreshes, global environment variables setups, list engines Discovery Engine clients, and real-time proxy streaming connections.
 *   🤖 **[agent/](file:///Users/sokratis/Documents/Code/0_playground/agent/)**: Coordinated AI Orchestration package folder.
     *   ⚙️ [agent.py](file:///Users/sokratis/Documents/Code/0_playground/agent/agent.py): Wire instructions and models.
-    *   ⚙️ [tools.py](file:///Users/sokratis/Documents/Code/0_playground/agent/tools.py): Local Python tools mapping (Listing online databases, dynamic grounding routing).
+    *   ⚙️ [tools.py](file:///Users/sokratis/Documents/Code/0_playground/agent/tools.py): Local Python tools mapping. Statically imports utilities from `util.py` (Listing online databases, dynamic search grounding routing).
     *   ⚙️ [prompts.py](file:///Users/sokratis/Documents/Code/0_playground/agent/prompts.py): System instructions persona.
     *   ⚙️ [agent.json](file:///Users/sokratis/Documents/Code/0_playground/agent/agent.json): Standard A2A card specifications.
 *   🖼️ **[static/index.html](file:///Users/sokratis/Documents/Code/0_playground/static/index.html)**: Main HTML5 shell. Structures dynamic columns grid layout, header badging trackers, suggestions capsules, relative overlays, and side trace console terminals.
@@ -104,7 +105,7 @@ When running the application locally on your workstation, authentication is faci
                                        |      (Routes API calls securely)       |
 ```
 
-*   **ADC Resolution**: Inside **[server.py:L31](file:///Users/sokratis/Documents/Code/0_playground/server.py#L31)**:
+*   **ADC Resolution**: Inside **[util.py:L20](file:///Users/sokratis/Documents/Code/0_playground/util.py#L20)**:
     ```python
     credentials, GCP_PROJECT_ID = google.auth.default()
     session = AuthorizedSession(credentials)
@@ -119,7 +120,7 @@ When running the application locally on your workstation, authentication is faci
 
 ### 2. Google GenAI SDK Vertex AI Integration
 To validate and run our local ADK `InMemoryRunner` coordinator agent model calls without needing a separate manual `api_key` environment variable:
-We map the resolved credentials project and location parameters directly inside **[server.py](file:///Users/sokratis/Documents/Code/0_playground/server.py#L42-L46)**. This forces Google's new GenAI SDK transport layers to automatically authorize model queries under your workstation's authenticated GCP access rights:
+We map the resolved credentials project and location parameters directly inside **[util.py](file:///Users/sokratis/Documents/Code/0_playground/util.py#L24-L28)**. This forces Google's new GenAI SDK transport layers to automatically authorize model queries under your workstation's authenticated GCP access rights:
 ```python
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
 os.environ["GOOGLE_CLOUD_PROJECT"] = GCP_PROJECT_ID
