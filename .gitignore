@@ -1,0 +1,14 @@
+# Python pycaches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Operating System temporary files
+.DS_Store
+Thumbs.db
+
+# Dynamic temporary local directories
+*.log
+tmp/
+temp/

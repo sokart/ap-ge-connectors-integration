@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Enterprise - Assistant Space Hub</title>
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Vanilla CSS Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Premium Deep Space Neon Backdrop -->
+    <div class="space-backdrop">
+        <div class="aurora aurora-purple"></div>
+        <div class="aurora aurora-orange"></div>
+        <div class="aurora aurora-blue"></div>
+    </div>
+
+    <!-- Glassmorphic Global Layout Wrapper -->
+    <main id="app-layout" class="app-layout">
+        
+        <!-- Premium Navigation Header -->
+        <header id="app-header" class="app-header">
+            <div class="header-logo">
+                <div class="glowing-orb"></div>
+                <h1 id="main-title">Assistant Space Hub</h1>
+            </div>
+            <div class="header-meta">
+                <div id="project-badge" class="meta-badge">
+                    <span class="badge-label">Project:</span>
+                    <span id="project-id" class="badge-value">Detecting...</span>
+                </div>
+                <button id="btn-toggle-dev" class="btn btn-dev-toggle">
+                    <span class="dev-toggle-orb"></span>
+                    <span>🛠️ Developer Trace Mode</span>
+                </button>
+                <div id="connection-status" class="connection-status disconnected">
+                    <span class="status-indicator"></span>
+                    <span id="status-text">Disconnected</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body Grid Layout -->
+        <section id="app-body" class="app-body">
+            
+            <!-- Sidebar Navigation panel -->
+            <aside id="app-sidebar" class="app-sidebar">
+                <button id="btn-new-chat" class="btn btn-primary">
+                    <span class="btn-icon">
+                        <!-- Plus SVG Icon -->
+                        <svg viewBox="0 0 24 24" class="svg-icon"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="currentColor"/></svg>
+                    </span>
+                    <span>New Exploration Session</span>
+                </button>
+
+                <!-- 1. GCP Engine Discovery Module -->
+                <div class="sidebar-section">
+                    <h2 class="section-title">Discovered Engines</h2>
+                    <div id="engines-list" class="engines-list">
+                        <div class="list-placeholder">Discovering engines in your project...</div>
+                    </div>
+                </div>
+
+                <!-- 2. Session History Module -->
+                <div class="sidebar-section flexible-section">
+                    <h2 class="section-title">Active Conversations</h2>
+                    <div id="sessions-list" class="sessions-list">
+                        <div class="list-placeholder">No active exploration yet.</div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-footer">
+                    <span class="footer-note">Powered by GCP streamAssist API</span>
+                </div>
+            </aside>
+
+            <!-- Chat Space Right Panel Container -->
+            <section id="chat-container" class="chat-container">
+                
+                <!-- Chat Workspace Header bar -->
+                <div id="chat-header" class="chat-header">
+                    <div class="active-engine-info">
+                        <h2 id="active-engine-name">Select an assistant to begin</h2>
+                        <p id="active-engine-desc">Select one of the discovered Search / Conversation engines on the left to start a real-time grounded streamAssist exploration.</p>
+                    </div>
+                    <div id="session-badge" class="session-badge hidden">
+                        <span>Active Session ID: </span>
+                        <span id="active-session-id" class="session-id-value"></span>
+                    </div>
+                </div>
+
+                <!-- Chat Messages Scroll Area -->
+                <div id="chat-messages" class="chat-messages">
+                    <div class="welcome-box">
+                        <div class="welcome-orb">✨</div>
+                        <h3>Welcome to Assistant Space Hub</h3>
+                        <p>Explore your private enterprise data with immediate responses using Google's newest streaming engine. Get references, exact citations, and Google Search grounding safely and securely in real-time.</p>
+                        
+                        <div class="quick-instructions">
+                            <h4>How to use:</h4>
+                            <ol>
+                                <li>Select any engine in the left column.</li>
+                                <li>Ask queries using natural language.</li>
+                                <li>Observe stream chunks as they type in real time.</li>
+                                <li>Hover or click numbered citation annotations to preview grounding source documents.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grounding Thinking Animation Widget -->
+                <div id="thinking-indicator" class="thinking-indicator hidden">
+                    <div class="pulse-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                    <span id="thinking-text" class="thinking-text">Model thinking...</span>
+                </div>
+
+                <!-- Quick Query Starters Recommendation Area -->
+                <div id="quick-prompts-bar" class="quick-prompts-bar hidden">
+                    <button class="quick-prompt-chip">What is Gemini Enterprise?</button>
+                    <button class="quick-prompt-chip">Summarize project updates</button>
+                    <button class="quick-prompt-chip">What is Deep Research?</button>
+                </div>
+
+                <!-- Glowing Text Input Area and Controller -->
+                <footer id="chat-input-bar" class="chat-input-bar disabled">
+                    <form id="chat-form" class="chat-form">
+                        <textarea 
+                            id="input-query" 
+                            placeholder="Select an assistant to start asking questions..." 
+                            rows="1" 
+                            disabled
+                            required
+                        ></textarea>
+                        <button type="submit" id="btn-send" class="btn btn-send" disabled>
+                            <!-- Send Arrow SVG -->
+                            <svg viewBox="0 0 24 24" class="svg-icon"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z" fill="currentColor"/></svg>
+                        </button>
+                    </form>
+                </footer>
+
+            </section>
+
+            <!-- Developer Control Panel (Third Column) -->
+            <aside id="developer-panel" class="developer-panel hidden">
+                <!-- Panel Tabs Header -->
+                <div class="dev-panel-tabs">
+                    <button id="tab-btn-stores" class="dev-tab-btn active" data-tab="tab-stores">Ground Sources</button>
+                    <button id="tab-btn-rest" class="dev-tab-btn" data-tab="tab-rest">REST Trace Console</button>
+                </div>
+                
+                <!-- Tab 1 Content: Grounded Data Stores List -->
+                <div id="tab-stores" class="dev-tab-content">
+                    <h3 class="dev-panel-title">Engine Data Index</h3>
+                    <p class="dev-panel-desc">Grounded data store connector assets queried dynamically by this assistant configuration.</p>
+                    <div id="datastores-deck" class="datastores-deck">
+                        <div class="list-placeholder">Select an engine to discover data stores...</div>
+                    </div>
+                </div>
+                
+                <!-- Tab 2 Content: REST Terminal Logs -->
+                <div id="tab-rest" class="dev-tab-content hidden">
+                    <h3 class="dev-panel-title">REST API Trace Console</h3>
+                    <p class="dev-panel-desc">Real-time HTTP requests and transcoded streaming response objects proxy traces.</p>
+                    
+                    <!-- HTTP POST Request Panel -->
+                    <div class="terminal-block">
+                        <div class="terminal-header">
+                            <span class="terminal-dot red"></span>
+                            <span class="terminal-dot yellow"></span>
+                            <span class="terminal-dot green"></span>
+                            <span class="terminal-title">HTTP POST REQUEST</span>
+                        </div>
+                        <div class="terminal-body scrollable-terminal">
+                            <pre id="term-request" class="term-log-code">// Waiting for exploration query submission...</pre>
+                        </div>
+                    </div>
+                    
+                    <!-- HTTP Response Stream Panel -->
+                    <div class="terminal-block flexible-terminal">
+                        <div class="terminal-header">
+                            <span class="terminal-dot red"></span>
+                            <span class="terminal-dot yellow"></span>
+                            <span class="terminal-dot green"></span>
+                            <span class="terminal-title">LIVE RESPONSE CHUNKS STREAM</span>
+                            <span id="term-status-dot" class="term-status-dot"></span>
+                        </div>
+                        <div class="terminal-body scrollable-terminal dark-console">
+                            <pre id="term-response" class="term-log-code green-console">// Waiting for API chunk stream broadcast...</pre>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+        </section>
+
+    </main>
+
+    <!-- Citation Hovercard Overlay (Dynamically Positioned) -->
+    <div id="citation-hovercard" class="citation-hovercard hidden">
+        <div class="hovercard-header">
+            <h4 id="hovercard-title">Document Title</h4>
+            <span id="hovercard-domain" class="hovercard-domain">domain.com</span>
+        </div>
+        <div class="hovercard-body">
+            <p id="hovercard-snippet">Extractive snippet preview goes here...</p>
+        </div>
+        <div class="hovercard-footer">
+            <div id="hovercard-datastore" class="hovercard-datastore">
+                <span class="datastore-icon">📦</span>
+                <span id="hovercard-datastore-name">Data store ID</span>
+            </div>
+            <a id="hovercard-link" href="#" target="_blank" class="btn btn-hovercard-visit">
+                <span>Open Source</span>
+                <svg viewBox="0 0 24 24" class="svg-icon"><path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z" fill="currentColor"/></svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- Vanilla Javascript Logic System -->
+    <script src="app.js"></script>
+</body>
+</html>
