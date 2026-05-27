@@ -14,13 +14,9 @@ logger = logging.getLogger("TestADK")
 # Append parent directory to sys.path to enable imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import local server variables to resolve dynamically authenticated Project ID
-from server import GCP_PROJECT_ID
-
-# Force Google GenAI SDK and ADK to route via Google Cloud Vertex AI backend
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
-os.environ["GOOGLE_CLOUD_PROJECT"] = GCP_PROJECT_ID
-os.environ["GOOGLE_CLOUD_LOCATION"] = "us-central1"
+# Import shared utility parameters to resolve dynamically authenticated Project ID
+# and establish standard Vertex AI SDK environment boundaries
+from util import GCP_PROJECT_ID
 
 import vertexai
 

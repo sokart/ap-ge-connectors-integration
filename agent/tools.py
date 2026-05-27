@@ -8,8 +8,12 @@ import json
 import logging
 import asyncio
 
-# Append parent directory to sys.path to enable importing server primitives
+# Append parent directory to sys.path to enable importing util primitives
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import our authenticated shared Discovery Engine and streamAssist transcode utilities directly!
+# Bypasses circular imports as util has zero down-level dependencies!
+from util import get_engines, gcp_stream_generator
 
 logger = logging.getLogger("SpaceHubAgent.Tools")
 
@@ -27,10 +31,6 @@ async def query_corporate_search_index(engine_id: str, query: str) -> str:
         A detailed summary containing grounded facts, figures, comparison tables, and references.
     """
     logger.info(f"Executing Tool: query_corporate_search_index. Target Engine: {engine_id}, Query: {query}")
-    
-    # Deferred import to resolve Python startup circular loops
-    from server import gcp_stream_generator
-    
     try:
         accumulated_chunks = []
         
@@ -78,10 +78,6 @@ async def list_available_search_engines() -> str:
         A JSON string containing the list of discovered engines, their IDs, display names, and connected datastore IDs.
     """
     logger.info("Executing Tool: list_available_search_engines")
-    
-    # Deferred import
-    from server import get_engines
-    
     try:
         res = await get_engines()
         engines_list = res.get("engines", [])
