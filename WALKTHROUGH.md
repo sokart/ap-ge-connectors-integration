@@ -1,6 +1,6 @@
 # SecureCoder Security Audit & Walkthrough
 
-**Status**: Completed (Dual-Mode Chat Space & Coordinated App Selection Verified)
+**Status**: Completed (Dual-Mode Chat Space & Targeted Datastore Verified)
 **Scanned Files**: 4 (`server.py`, `static/index.html`, `static/app.js`, `agent/tools.py`)
 **Vulnerabilities Identified**: 4 (Proactively Remediated during Design Phase)
 **Vulnerabilities Fixed**: 4 (100% Safe Verification)
@@ -69,14 +69,12 @@ The live response terminal flashes active red indicators and rolls downward in r
 
 This walkthrough verifies our custom **Google Agent Development Kit (ADK)** integration. We test our local conversational orchestrator (the **Space Hub AI Coordinator**) running in a python local `InMemoryRunner` session on the FastAPI backend.
 
-### 🧬 Circular Dependency Decoupling (Deferred Imports)
-During the ADK loading phase, importing server generator routines into python tools caused a circular module dependency lock. To bypass this, we implemented deferred function-level imports (importing server APIs only during active execution cycles in **`agent/tools.py`**), breaking startup cycles.
+### 🧬 Circular Dependency Decoupling (Shared `util.py` Library)
+During the ADK loading phase, server-side stream assist routes caused imports cycles. To resolve this completely, we decoupled credentials and stream assist functions completely, moving them into a unified **`util.py`** shared library module. Both BFF server routes and ADK agent tools statically import these helper routines directly on top of the modules with zero cycles:
 
 ```python
-async def query_corporate_search_index(engine_id: str, query: str) -> str:
-    # Deferred imports break the Python circular dependency loading lock!
-    from server import gcp_stream_generator
-    ...
+# Statically import tools directly on top under tools.py!
+from util import get_engines, gcp_stream_generator
 ```
 
 ### Step 1: Navigating to the AI Coordinator Space
@@ -125,25 +123,50 @@ Focusing the ADK agent, it target executes `query_corporate_search_index` on `ge
 
 ---
 
-## 🖼️ Unified Coordinated Grounding Verification Carousel
+## 🚀 Verification Walkthrough 5: Interactive Private Datastore Filters Targeting & Tool Routing
 
-The following interactive carousel displays the complete dynamic targeted ADK coordinator sequence:
+This walkthrough verifies our custom **Targeted Datastore Grounding** systems, testing interactive card clicking direct search filters restricting scopes in real-time, and dynamic multi-tool planning tool calls (`query_selected_datastore`) routing strictly inside specific database indices under conversational agents.
+
+### Step 1: Direct Search Targeted Datastore Filters (Emerald Glow Highlights)
+Under `🧭 Direct Search` explorer mode, clicking on a specific data source connector card uncollapses a glowing, responsive **mint-emerald active border highlight (`active-filter`)** frame. The chat input bar placeholder shifts to indicate datastore restrictions in real-time, while a pulsing neon-red System Alert bubble is rendered to notify the user of dynamic targeting limits:
+
+![Direct Search Emerald active-filter card active highlights](docs/assets/datastore_green_filter.png)
+
+### Step 2: Target Grounding POST endpoint redirection trace
+Submitting queries under active datastore filters redirects routes to **`/api/chat/datastore`**. The `HTTP POST REQUEST` trace console logs request scopes live, displaying that the BFF secure payload includes `datastore_id: "e2e-bucket_1779877581501"` payload values. De-clicking the glowing emerald filter card clears card highlights, resets input placeholders, and restores grounding queries to all private datasets.
+
+### Step 3: Coordinated Agentic Datastore Constraint Routing
+When the user converses with the **Space Hub AI Coordinator** agent and requests to ground questions strictly on a particular datasource (e.g. *"Please search strictly inside e2e-bucket and compare revenues..."*):
+*   **Intelligent Tool Choice**: The ADK agent captures the constraint, maps `e2e-bucket` ID, and autonomously triggers the targeted grounding tool **`query_selected_datastore`** (passing BOTH engine ID and targeted datastore ID!).
+*   **Real-Time Tool Badge Chip**: A glowing warning chip status card renders inside the chat Turn bubble in real-time tracing this tool choice execution live, returning grounded revenue grids comparisons cleanly:
+
+![Targeted query_selected_datastore Tool Badge Chip inside chat bubble](docs/assets/coordinated_agent_table.png)
+
+---
+
+## 🖼️ Unified Grounding Operations Verification Carousel
+
+The following interactive carousel displays the complete dynamic GCP streamAssist and ADK coordinator tool calling sequence:
 
 ````carousel
-![1. Coordinated Target Selection Active](docs/assets/coordinated_agent_datastores.png)
+![1. Standard direct Search explorer](docs/assets/engine_discovery_sidebar.png)
 <!-- slide -->
-![2. Request Console Target Overrides Envelope](docs/assets/coordinated_agent_payload.png)
+![2. Targeted Emerald Grounding Filter Card active](docs/assets/datastore_green_filter.png)
 <!-- slide -->
-![3. Grounded YoY Financial revenue Table](docs/assets/coordinated_agent_table.png)
+![3. Coordinated Target Selection in sidebar active](docs/assets/coordinated_agent_datastores.png)
+<!-- slide -->
+![4. Request Console targeted system envelope logs](docs/assets/coordinated_agent_payload.png)
+<!-- slide -->
+![5. Grounded YoY Financial revenue tables comparison](docs/assets/coordinated_agent_table.png)
 ````
 
 ---
 
-## 🎥 Unified Coordinated Exploration Video Record
+## 🎥 Unified Grounding Exploration Session Recording Walkthrough
 
-The complete, live browser validation session tracing the Coordinated App Selection flow (toggling modes, selecting `gemini-enterprise-e2e` index, inspecting GCS datastores list cards, submitting Alphabet comparative prompts, tracking targeted request system envelopes inside REST console log terminals, streaming real-time tool calling badges, outputting YoY comparative revenues grids, switching to autonomous agent room, and toggling back to direct search explorers) was recorded:
+The complete, live browser integration session tracing all workspace exploration pipelines (toggling rooms mode switcher, selecting `gemini-enterprise-e2e`, uncollapsing dev panels drawers, clicking data store cards, monitoring **emerald glowing active-filter highlights, system alert bubbles, and restricted placeholders overlays**, submitting targeted direct searches, verifying `/api/chat/datastore` and request payloads inside terminals console, toggling AI Coordinator space, selecting autonomous coord, submitting target datastores constraints prompts, and verifying dynamic **`query_selected_datastore`** tool calls status warnings chips) was recorded:
 
-![Coordinated App Selection Session Recording Walkthrough](docs/assets/coordinated_agent_demo.webp)
+![Targeted Datastore Grounding & Tools Routing Session Recording](docs/assets/datastore_filter_demo.webp)
 
 ---
 

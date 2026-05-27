@@ -87,3 +87,54 @@ async def list_available_search_engines() -> str:
     except Exception as e:
         logger.exception("Failure encountered in list_available_search_engines tool:")
         return f"Tool execution failed to list engines: {str(e)}"
+
+
+async def query_selected_datastore(engine_id: str, datastore_id: str, query: str) -> str:
+    """Queries a specific GCP generative search assistant engine, searching STRICTLY and EXCLUSIVELY inside a selected datastore ID.
+    
+    Use this tool ONLY when the user explicitly requests to search, query, or get answers using a specific 
+    private data source, bucket, or repository by name or ID, rather than searching all connected datastores.
+    
+    Args:
+        engine_id: The exact ID of the target search engine configuration (e.g., 'gemini-enterprise-e2e_1779876734248').
+        datastore_id: The ID of the specific private datastore data source to query (e.g., 'e2e-bucket_1779877581501').
+        query: The specific search query or question to execute against documents in this data source.
+        
+    Returns:
+        A detailed summary containing grounded facts and comparative insights filtered exclusively from that data source.
+    """
+    logger.info(f"Executing Tool: query_selected_datastore. Engine: {engine_id}, Datastore: {datastore_id}, Query: {query}")
+    
+    # Import standard dynamic transcode generators from shared utilities
+    from util import gcp_stream_datastore_generator
+    
+    try:
+        accumulated_chunks = []
+        async for sse_event in gcp_stream_datastore_generator(engine_id=engine_id, datastore_id=datastore_id, query=query):
+            lines = sse_event.split("\n")
+            event_type = "chunk"
+            data_str = ""
+            for line in lines:
+                if line.startswith("event: "):
+                    event_type = line.split("event: ")[1].strip()
+                elif line.startswith("data: "):
+                    data_str = line.split("data: ")[1].strip()
+            
+            # Extract standard chunks and ignore request debug blocks
+            if event_type == "chunk" and data_str:
+                try:
+                    data_json = json.loads(data_str)
+                    if "text" in data_json:
+                        accumulated_chunks.append(data_json["text"])
+                except Exception:
+                    pass
+                    
+        if not accumulated_chunks:
+            return f"Execution complete. No factual documents inside data source '{datastore_id}' matched this query."
+            
+        final_response = "".join(accumulated_chunks)
+        logger.info(f"Tool query_selected_datastore completed. Returned {len(final_response)} characters.")
+        return final_response
+    except Exception as e:
+        logger.exception("Failure in query_selected_datastore tool:")
+        return f"Tool execution failed under error: {str(e)}"

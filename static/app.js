@@ -51,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let activeEngine = null;
     let activeSessionPath = null; // Session ID or Resource Path
     let currentActiveMode = "direct"; // "direct" or "agentic"
+    let activeDatastoreFilterId = null; // Mapped targeting datastore ID
     
     let conversationsDirect = {}; // Direct search history
     let conversationsAgentic = {}; // Agentic coordinator history
@@ -158,6 +159,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Target selecting an engine from sidebar
     function selectEngine(eng) {
+        activeDatastoreFilterId = null; // Clear old targeted datastore filters on engine change
+        
         // Toggle selected styling
         document.querySelectorAll(".engine-card").forEach(el => el.classList.remove("active"));
         const card = document.getElementById(`engine-card-${eng.id}`);
@@ -214,6 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Establish a brand new local session mapping
     function setupNewSession() {
+        activeDatastoreFilterId = null; // Clear old datastore target filters
         activeSessionPath = null;
         sessionBadge.classList.add("hidden");
         activeSessionIdText.textContent = "";
@@ -462,28 +466,45 @@ document.addEventListener("DOMContentLoaded", () => {
         
         // SSE Client Streaming connection logic
         try {
-            const targetUrl = currentActiveMode === "agentic" ? "/api/agent/chat" : "/api/chat";
+            let targetUrl = "/api/chat";
+            let payload = {};
             
-            // For ADK local runner, we map a unique local session ID hash
-            const resolvedSessionId = activeSessionPath || `session_hash_${Math.random().toString(36).substring(2, 15)}`;
-            
-            let sseQueryText = query;
-            if (currentActiveMode === "agentic" && activeEngine.id !== "space_hub_coordinator") {
-                // Inject target coordinated engine envelope to focus the ADK Agent!
-                sseQueryText = 
-                    `[System Context: You are currently connected to the search engine '${activeEngine.display_name}' (ID: '${activeEngine.id}'). ` +
-                    `Your answers MUST be strictly grounded on documents inside this engine data stores. Always query this engine ID for all search tools executions!]\n\n` +
-                    `User Query: ${query}`;
+            if (currentActiveMode === "agentic") {
+                targetUrl = "/api/agent/chat";
+                const resolvedSessionId = activeSessionPath || `session_hash_${Math.random().toString(36).substring(2, 15)}`;
+                
+                let sseQueryText = query;
+                if (activeEngine.id !== "space_hub_coordinator") {
+                    // Inject target coordinated engine envelope to focus the ADK Agent!
+                    sseQueryText = 
+                        `[System Context: You are currently connected to the search engine '${activeEngine.display_name}' (ID: '${activeEngine.id}'). ` +
+                        `Your answers MUST be strictly grounded on documents inside this engine data stores. Always query this engine ID for all search tools executions!]\n\n` +
+                        `User Query: ${query}`;
+                }
+                
+                payload = {
+                    query: sseQueryText,
+                    session_id: resolvedSessionId
+                };
+            } else {
+                // Direct Search Mode: Check if dynamic selected datastore filter is active!
+                if (activeDatastoreFilterId) {
+                    targetUrl = "/api/chat/datastore";
+                    payload = {
+                        engine_id: activeEngine.id,
+                        datastore_id: activeDatastoreFilterId,
+                        query: query,
+                        session: activeSessionPath
+                    };
+                } else {
+                    targetUrl = "/api/chat";
+                    payload = {
+                        engine_id: activeEngine.id,
+                        query: query,
+                        session: activeSessionPath
+                    };
+                }
             }
-            
-            const payload = currentActiveMode === "agentic" ? {
-                query: sseQueryText,
-                session_id: resolvedSessionId
-            } : {
-                engine_id: activeEngine.id,
-                query: query,
-                session: activeSessionPath
-            };
             
             const response = await fetch(targetUrl, {
                 method: "POST",
@@ -1197,6 +1218,34 @@ document.addEventListener("DOMContentLoaded", () => {
             meta.appendChild(path);
             
             card.appendChild(meta);
+            
+            // If direct search mode is active, bind active datastore filter toggle!
+            card.style.cursor = currentActiveMode === "direct" ? "pointer" : "default";
+            
+            // Check if this card represents the active filter on redraw!
+            if (currentActiveMode === "direct" && activeDatastoreFilterId === dsId) {
+                card.classList.add("active-filter");
+            }
+            
+            card.addEventListener("click", () => {
+                if (currentActiveMode !== "direct") return;
+                
+                if (activeDatastoreFilterId === dsId) {
+                    // De-select!
+                    activeDatastoreFilterId = null;
+                    card.classList.remove("active-filter");
+                    inputQuery.placeholder = `Ask ${activeEngine.display_name} anything...`;
+                    showSystemMessage(`Targeted datastore filter cleared. Grounding search restored to cover all connected databases.`);
+                } else {
+                    // Select target datastore filter!
+                    activeDatastoreFilterId = dsId;
+                    document.querySelectorAll(".datastore-item-card").forEach(c => c.classList.remove("active-filter"));
+                    card.classList.add("active-filter");
+                    inputQuery.placeholder = `Searching strictly inside data source '${cleanTitle}'...`;
+                    showSystemMessage(`Grounded search target restricted to private data source: '${cleanTitle}' exclusive.`);
+                }
+            });
+            
             datastoresDeck.appendChild(card);
         });
     }
@@ -1288,6 +1337,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 1. Setup Rooms Mode transition helper
     function setRoomMode(mode) {
+        activeDatastoreFilterId = null; // Reset datastore targeted filters on transition
         currentActiveMode = mode;
         if (mode === "direct") {
             navBtnDirect.classList.add("active");

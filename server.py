@@ -19,7 +19,8 @@ from util import (
     session, 
     GCP_PROJECT_ID, 
     get_engines as get_engines_util, 
-    gcp_stream_generator
+    gcp_stream_generator,
+    gcp_stream_datastore_generator
 )
 
 # Setup secure logger
@@ -99,6 +100,29 @@ async def chat(request: Request):
         )
     except Exception as e:
         logger.error(f"Error initiating chat streaming: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/chat/datastore")
+async def chat_datastore(request: Request):
+    """
+    POST API that accepts engine_id, datastore_id, query, and session, yielding dynamic SSE grounded STRICTLY on that datastore.
+    """
+    try:
+        body = await request.json()
+        engine_id = body.get("engine_id")
+        datastore_id = body.get("datastore_id")
+        query = body.get("query")
+        session_path = body.get("session")
+        
+        if not engine_id or not datastore_id or not query:
+            raise HTTPException(status_code=400, detail="engine_id, datastore_id, and query are required parameters.")
+            
+        return StreamingResponse(
+            gcp_stream_datastore_generator(engine_id, datastore_id, query, session_path),
+            media_type="text/event-stream"
+        )
+    except Exception as e:
+        logger.error(f"Error initiating datastore chat streaming: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 async def adk_agent_stream_generator(query: str, session_id: str):

@@ -8,11 +8,11 @@ Built with a **FastAPI Backend-for-Frontend (BFF)** proxy architecture, a **Goog
 
 ---
 
-## 📸 Coordinated Multi-Engine Chat Dashboards
+## 📸 Interactive Multi-Engine & Targeted Grounding Chat Space
 
-| 📦 Grounded Data Stores Panel | 🛠️ Highlighted Target Override Payload |
+| 📦 Emerald-Glowing Active Datastore Filter Card | 🛠️ Dynamic Coordinated Tools Event Console |
 | :--- | :--- |
-| ![Grounded Data Stores Panel](docs/assets/coordinated_agent_datastores.png) | ![REST HTTP Logs Panel](docs/assets/coordinated_agent_payload.png) |
+| ![Grounded Data Stores Panel](docs/assets/datastore_green_filter.png) | ![REST HTTP Logs Panel](docs/assets/agent_logs_console.png) |
 
 ---
 
@@ -20,9 +20,9 @@ Built with a **FastAPI Backend-for-Frontend (BFF)** proxy architecture, a **Goog
 
 The visual verification walkthrough sequence is documented under **[WALKTHROUGH.md](file:///Users/sokratis/Documents/Code/0_playground/WALKTHROUGH.md)**. 
 
-Open **[coordinated_agent_demo.webp](file:///Users/sokratis/Documents/Code/0_playground/docs/assets/coordinated_agent_demo.webp)** to see the animation of our local target coordinated agent stream: toggling modes, selecting `gemini-enterprise-e2e` card under agent mode, verifying dynamic data stores collections uncollapse, submitting earnings comparative prompts, tracking targeted request system envelopes inside REST console request log terminals, streaming dynamic tool warning badges, and outputting YoY comparative revenues tables!
+Open **[datastore_filter_demo.webp](file:///Users/sokratis/Documents/Code/0_playground/docs/assets/datastore_filter_demo.webp)** to see the animation of our full-stack targeted explorer: toggling search rooms modes, selecting `gemini-enterprise-e2e` engine, clicking e2e-bucket datastore cards to trigger glowing **mint-emerald active-filter card overlays, restricted placeholders text and warning balloons**, submitting direct searches to `/api/chat/datastore` logging dynamic requests consoles live, de-selecting target filters, switching to AI Coordinator agentic room selection deck, entering targeted GCS datasource prompts, and monitoring real-time **`query_selected_datastore`** tool choice warn badges!
 
-![ADK Coordinated App Selection stream Recording](docs/assets/coordinated_agent_demo.webp)
+![Grounded Datastore filter targeted stream Recording](docs/assets/datastore_filter_demo.webp)
 
 ---
 
@@ -39,11 +39,11 @@ TALK to an advanced corporate coordinator agent directly using natural conversat
 *   **Dynamic Tool Calling & Warnings Balloons**: Integrates the agent with standard docstring-mapped Python tools. If the agent makes intermediate decisions to list search spaces or query document databases, a custom glowing tool calling status chip renders inside the chat stream in real-time: `🤖 Space Hub Coordinator: [Invoking Tool...]`.
 *   **Prism Architectural Decoupling (Shared `util.py` Library)**: Extracted all GCP credentials resolutions, listing engines API mappings, and streamAssist transcode generator methods into a shared, centralized, stateless utilities library **`util.py`**. This completely decouples local ADK Agent tools and CLI test scripts, letting them statically import functions directly on top of the files with zero port loopbacks or circular dependency locks!
 
-### 3. Dynamic Datastore Routing Engine
-Bypassing the traditional several-hours latency during console sync states:
-*   Upon query submission, the BFF automatically interrogates the GCP Engine details in real-time.
-*   It dynamically auto-discovers linked database indexes (such as your newly created GCS bucket index `e2e-bucket_1779877581501`).
-*   It constructs a dynamic `toolsSpec` POST configuration block on-the-fly and overlays the target indices within the `streamAssist` execution body, delivering instantaneous multi-document search grounding.
+### 3. Dynamic Datastore Routing & Targeted Emerald Filters
+Bypassing the traditional several-hours latency during console sync states, developers can route searches strictly:
+*   **Direct Search targeted Datastores Filters**: Click any private data source connector card inside the dev panel under Direct Search to restrict grounding search strictly and exclusively inside that database index on-the-fly. The UI uncollapses a premium glowing **mint-emerald active border highlight (`active-filter`)** frame, updates chat placeholders overlays, and flushes warning alert capsules in real-time, redirecting streams requests safely to `/api/chat/datastore` to restrict standard direct search config scopes. De-clicking clears target filters, restoring grounding search to all private datasets immediately.
+*   **Coordinated Agent Targeted Grounding**: Converse with the AI coordinator agent, passing targeted datasource constraints in normal natural conversational prompts (e.g. *"Query strictly using e2e-bucket only"*). The ADK agent captures the constraint, maps target index ID, and target routes searches exclusively inside that specific datastore by invoking standard python tool **`query_selected_datastore`** (passing BOTH target engine and targeted datastore ID!), returning metric comparative revenues tables flawlessly.
+*   **Dynamic Datastore Routing**: Fallback autonomous behavior auto-interrogates GCP Engine details, discovers all linked databases indexes, and constructs dynamic `toolsSpec` configurations on-the-fly within `streamAssist` execution blocks, delivering instant multi-document grounding.
 
 ### 4. Collapsible Developer Trace Console (Triple-Column Grid Shift)
 Clicking `🛠️ Developer Trace Mode` dynamically transitions the fluid web space grid into a triple-column layout, uncollapsing a Frosted Glass Space panel carrying two visual consoles:
@@ -69,8 +69,8 @@ To securely parse and syntax-color JSON strings and payloads without using hazar
 *   ⚙️ **[server.py](file:///Users/sokratis/Documents/Code/0_playground/server.py)**: Secure FastAPI BFF backend microservice. Handles CORS authorizations middlewares, secure headers injection, session configurations, and local ADK agent runner SSE transcoding loops. Delegated API proxyings completely to `util.py`.
 *   ⚙️ **[util.py](file:///Users/sokratis/Documents/Code/0_playground/util.py)**: Centralized, authenticated GCP credentials and streamAssist transcode generator library. Coordinates Application Default Credentials (ADC) token refreshes, global environment variables setups, list engines Discovery Engine clients, and real-time proxy streaming connections.
 *   🤖 **[agent/](file:///Users/sokratis/Documents/Code/0_playground/agent/)**: Coordinated AI Orchestration package folder.
-    *   ⚙️ [agent.py](file:///Users/sokratis/Documents/Code/0_playground/agent/agent.py): Wire instructions and models.
-    *   ⚙️ [tools.py](file:///Users/sokratis/Documents/Code/0_playground/agent/tools.py): Local Python tools mapping. Statically imports utilities from `util.py` (Listing online databases, dynamic search grounding routing).
+    *   ⚙️ [agent.py](file:///Users/sokratis/Documents/Code/0_playground/agent/agent.py): Wire instructions and models. Registers search, listing, and targeted datastore tool subroutines.
+    *   ⚙️ [tools.py](file:///Users/sokratis/Documents/Code/0_playground/agent/tools.py): Local Python tools mapping. Statically imports utilities from `util.py` (Listing online databases, dynamic search grounding routing, targeted datastore search).
     *   ⚙️ [prompts.py](file:///Users/sokratis/Documents/Code/0_playground/agent/prompts.py): System instructions persona.
     *   ⚙️ [agent.json](file:///Users/sokratis/Documents/Code/0_playground/agent/agent.json): Standard A2A card specifications.
 *   🖼️ **[static/index.html](file:///Users/sokratis/Documents/Code/0_playground/static/index.html)**: Main HTML5 shell. Structures dynamic columns grid layout, header badging trackers, suggestions capsules, relative overlays, and side trace console terminals.

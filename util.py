@@ -228,3 +228,161 @@ async def gcp_stream_generator(engine_id: str, query: str, session_path: str = N
         logger.error(f"Exception during streamAssist proxy stream: {e}")
         yield f"event: error\ndata: {json.dumps({'message': str(e)})}\n\n"
         yield "event: done\ndata: {}\n\n"
+
+async def gcp_stream_datastore_generator(engine_id: str, datastore_id: str, query: str, session_path: str = None):
+    """
+    Streams streamAssist REST API chunks in real-time grounded STRICTLY on a single selected datastore ID.
+    """
+    if not session or not GCP_PROJECT_ID:
+        yield f"event: error\ndata: {json.dumps({'message': 'Server auth uninitialized'})}\n\n"
+        yield "event: done\ndata: {}\n\n"
+        return
+
+    # Escape query input strictly for safety
+    query = re.sub(r'[\r\n\t]', ' ', query).strip()
+    
+    # Extract data store ID in case full GCP resource URI path is passed
+    clean_ds_id = datastore_id.split("/")[-1].strip()
+    logger.info(f"Targeting grounding search strictly on single Datastore ID: {clean_ds_id} (Engine: {engine_id})")
+    
+    url = (
+        f"https://discoveryengine.googleapis.com/v1beta/"
+        f"projects/{GCP_PROJECT_ID}/locations/global/collections/default_collection/"
+        f"engines/{engine_id}/assistants/default_assistant:streamAssist"
+        f"?prettyPrint=false"
+    )
+    
+    payload = {
+        "query": {
+            "text": query
+        }
+    }
+    
+    # Hardcode only the single selected datastore specs block inside toolsSpec!
+    payload["toolsSpec"] = {
+        "vertexAiSearchSpec": {
+            "dataStoreSpecs": [
+                {
+                    "dataStore": f"projects/{GCP_PROJECT_ID}/locations/global/collections/default_collection/dataStores/{clean_ds_id}"
+                }
+            ]
+        }
+    }
+    
+    if session_path:
+        payload["session"] = session_path
+        
+    logger.info(f"Initiating targeted datastore streamAssist session. Engine: {engine_id}, Datastore: {clean_ds_id}, Session: {session_path}")
+    
+    # Mask headers securely for user raw REST log display
+    headers_masked = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer [MASKED_GCP_BFF_TOKEN]"
+    }
+    raw_req_metadata = {
+        "method": "POST",
+        "url": url,
+        "headers": headers_masked,
+        "payload": payload
+    }
+    yield f"event: raw_request\ndata: {json.dumps(raw_req_metadata)}\n\n"
+    
+    try:
+        # Use streaming POST request to proxy GCP response
+        response = session.post(url, json=payload, stream=True)
+        
+        if response.status_code != 200:
+            logger.error(f"GCP API returned code {response.status_code}: {response.text}")
+            err_msg = f"GCP Discovery Engine API error for datastore '{clean_ds_id}'."
+            try:
+                err_details = response.json()
+                if "error" in err_details:
+                    err_msg = err_details["error"].get("message", err_msg)
+            except Exception:
+                pass
+            yield f"event: error\ndata: {json.dumps({'message': err_msg})}\n\n"
+            yield "event: done\ndata: {}\n\n"
+            return
+            
+        citations = []
+        final_session_id = None
+        
+        for line in response.iter_lines():
+            if not line:
+                continue
+                
+            decoded_line = line.decode('utf-8').strip()
+            
+            # Yield byte-for-byte compact response chunk to frontend dev console
+            yield f"event: raw_response_chunk\ndata: {json.dumps({'chunk': decoded_line})}\n\n"
+            
+            # Standard REST transcoded stream array framing stripper
+            if decoded_line.startswith("["):
+                decoded_line = decoded_line[1:]
+            if decoded_line.endswith("]"):
+                decoded_line = decoded_line[:-1]
+            if decoded_line.endswith(","):
+                decoded_line = decoded_line[:-1]
+                
+            decoded_line = decoded_line.strip()
+            if not decoded_line:
+                continue
+                
+            try:
+                chunk = json.loads(decoded_line)
+                
+                # Check for skipped queries
+                answer = chunk.get("answer", {})
+                state = answer.get("state")
+                
+                # Handle skipped reasons
+                if state == "SKIPPED":
+                    reasons = answer.get("assistSkippedReasons", [])
+                    yield f"event: warning\ndata: {json.dumps({'message': f'Skipped assistant response: {reasons}'})}\n\n"
+                
+                # Extract session info on completion
+                session_info = chunk.get("sessionInfo", {})
+                if session_info.get("session"):
+                    final_session_id = session_info["session"]
+                    
+                replies = answer.get("replies", [])
+                for reply in replies:
+                    grounded_content = reply.get("groundedContent", {})
+                    
+                    # 1. Text payload chunks
+                    content = grounded_content.get("content", {})
+                    text_chunk = content.get("text")
+                    if text_chunk:
+                        yield f"event: chunk\ndata: {json.dumps({'text': text_chunk})}\n\n"
+                        
+                    # 2. Extract citations / grounding metadata
+                    metadata = grounded_content.get("textGroundingMetadata", {})
+                    if metadata:
+                        refs = metadata.get("references", [])
+                        segments = metadata.get("segments", [])
+                        if refs or segments:
+                            citations.append({
+                                "references": refs,
+                                "segments": segments
+                            })
+                            
+                # Yield metadata final response when done
+                if state in ["SUCCEEDED", "FAILED", "SKIPPED"]:
+                    metadata_payload = {
+                        "state": state,
+                        "session": final_session_id,
+                        "citations": citations
+                    }
+                    yield f"event: metadata\ndata: {json.dumps(metadata_payload)}\n\n"
+                    
+            except Exception as e:
+                logger.error(f"Error parsing line chunk: {e}. Line raw: {decoded_line[:200]}")
+                continue
+                
+        # Final done event
+        yield "event: done\ndata: {}\n\n"
+        
+    except Exception as e:
+        logger.error(f"Exception during targeted streamAssist proxy stream: {e}")
+        yield f"event: error\ndata: {json.dumps({'message': str(e)})}\n\n"
+        yield "event: done\ndata: {}\n\n"
