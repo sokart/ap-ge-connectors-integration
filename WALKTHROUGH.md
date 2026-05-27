@@ -1,6 +1,6 @@
 # SecureCoder Security Audit & Walkthrough
 
-**Status**: Completed (Dual-Mode Chat Space & ADK Agentic Coordinated)
+**Status**: Completed (Dual-Mode Chat Space & Coordinated App Selection Verified)
 **Scanned Files**: 4 (`server.py`, `static/index.html`, `static/app.js`, `agent/tools.py`)
 **Vulnerabilities Identified**: 4 (Proactively Remediated during Design Phase)
 **Vulnerabilities Fixed**: 4 (100% Safe Verification)
@@ -67,7 +67,7 @@ The live response terminal flashes active red indicators and rolls downward in r
 
 ## 🚀 Verification Walkthrough 3: Local Google ADK Agentic Coordinator & Multi-Tool Orchestration
 
-This walkthrough verifies our custom **Google Agent Development Kit (ADK)** integration. We test our local conversational orchestrator (the **Space Hub AI Coordinator**) running in a python local `InMemoryRunner` session on the FastAPI backend, executing multiple background tools autonomously, and transcoding structured runner events (text responses and tool calls) to the browser.
+This walkthrough verifies our custom **Google Agent Development Kit (ADK)** integration. We test our local conversational orchestrator (the **Space Hub AI Coordinator**) running in a python local `InMemoryRunner` session on the FastAPI backend.
 
 ### 🧬 Circular Dependency Decoupling (Deferred Imports)
 During the ADK loading phase, importing server generator routines into python tools caused a circular module dependency lock. To bypass this, we implemented deferred function-level imports (importing server APIs only during active execution cycles in **`agent/tools.py`**), breaking startup cycles.
@@ -80,41 +80,70 @@ async def query_corporate_search_index(engine_id: str, query: str) -> str:
 ```
 
 ### Step 1: Navigating to the AI Coordinator Space
-Clicking the `🤖 AI Coordinator` toggle in the spaces navigator slides the discovered engines block out. It mounts a purple-accented card representing the **Space Hub AI Coordinator** carrying a status pill `AGENT` pulsing, updating welcome layouts describing multi-tool agent capabilities:
+Clicking the `🤖 AI Coordinator` toggle in the spaces navigator uncollapses the AI Orchestrator Agent Card at the top of the sidebar. It displays a status pill `AGENT` pulsing, updating welcome layouts describing multi-tool agent capabilities:
 
-![AI Coordinator Selection Workspace](docs/assets/dev_console_datastores_list.png)
+![AI Coordinator Selection Workspace](docs/assets/agent_logs_console.png)
 
-### Step 2: Dynamic Tool Discovery & Python Event Streams
-Querying the agent to discover online search spaces triggers our local `InMemoryRunner` session. The agent autonomously schedules tool call `list_available_search_engines` in the background. Inside the chat, a dynamic visual chip highlights this tool decision in real-time, while the response log terminal streams the actual python GenAI Event dictionaries chunk-by-chunk:
+### Step 2: Dynamic Tool Discovery & Python Event Streams (Autonomous Mode)
+Querying the agent directly under autonomous mode triggers our local `InMemoryRunner` session. The agent autonomously schedules tool call `list_available_search_engines` in the background to discover search spaces. Inside the chat, a dynamic visual chip highlights this tool decision in real-time, while the response log terminal streams the actual python GenAI Event dictionaries chunk-by-chunk:
 
 ![Dynamic Tool-Call Warnings Chip and Events Logging](docs/assets/agent_logs_console.png)
 
-### Step 3: YoY Coordinated Grounding & Comparisons
-Submitting a YoY financial revenue question prompts the agent to target our GCS search index (`gemini-enterprise-e2e_1779876734248`) autonomously, invoking the document grounding tool `query_corporate_search_index`. The agent consolidates the PDF metric results into a detailed Year-over-Year comparison table, tracing performance fluctuations in Google Search, YouTube Ads, and Cloud segments:
+---
 
-![Grounded YoY comparison Table Output](docs/assets/agent_comparison_table.png)
+## 🚀 Verification Walkthrough 4: Target Coordinated App Selection & Context Overrides
+
+This walkthrough verifies our premium **Coordinated App Selection** feature inside the AI Coordinator room, enabling developers to hardcode targeting scopes for the agent while maintaining absolute conversational intelligence.
+
+### ⚙️ Target Coordinated Prompt Context Overrides (Envelopes)
+When a user selects a specific engine card (e.g. `gemini-enterprise-e2e`) while in the AI Coordinator mode, the frontend captures this targeting scope. 
+
+When you submit a query, the BFF backend automatically wraps the query text in a secure **System Context Envelope**. This hardcodes the target engine ID inside the model's runtime context on-the-fly, while rendering the original clean text prompt inside your visual chat balloons:
+
+```javascript
+// Target Coordinated Prompt override envelope mapping
+sseQueryText = 
+    `[System Context: You are currently connected to the search engine '${activeEngine.display_name}' (ID: '${activeEngine.id}'). ` +
+    `Your answers MUST be strictly grounded on documents inside this engine data stores. Always query this engine ID for all search tools executions!]\n\n` +
+    `User Query: ${query}`;
+```
+
+### Step 1: Target Engine Coordinated Selections
+Selecting `gemini-enterprise-e2e` in the sidebar while in `AI Coordinator` mode updates the active headers dynamically, unlocking typing inputs specifically for that index, and listing GCS bucket indexes `e2e-bucket` under Grounded Sources:
+
+![Target Engine Coordinated Selection Workspace Layout](docs/assets/coordinated_agent_datastores.png)
+
+### Step 2: Live Request Trace showing Target Override Envelope
+Submitting a comparative revenue prompt triggers the live trace. In the `HTTP POST REQUEST` console, you can monitor the actual post payload, showing exactly how the BFF wraps your query inside the `[System Context: ...]` envelope to focus the LLM:
+
+![REST HTTP POST Terminal showing Coordinated System Envelope](docs/assets/coordinated_agent_payload.png)
+
+### Step 3: Grounded comparative YoY Financial Tables Output
+Focusing the ADK agent, it target executes `query_corporate_search_index` on `gemini-enterprise-e2e_1779876734248` index. It resolves the bucket PDF documents, aggregates results, and outputs a highly responsive Year-over-Year (YoY) comparative financial table comparing consolidated revenues, services, YouTube, and Cloud segments margins fluctuations:
+
+![Coordinated YoY comparative Revenues Matrix Table](docs/assets/coordinated_agent_table.png)
 
 ---
 
-## 🖼️ Unified Agentic Grounding Verification Carousel
+## 🖼️ Unified Coordinated Grounding Verification Carousel
 
-The following interactive carousel displays the complete dynamic ADK coordinator sequence:
+The following interactive carousel displays the complete dynamic targeted ADK coordinator sequence:
 
 ````carousel
-![1. Coordinated Agentic Room Active](docs/assets/dev_console_datastores_list.png)
+![1. Coordinated Target Selection Active](docs/assets/coordinated_agent_datastores.png)
 <!-- slide -->
-![2. Background Tool Calling Traces](docs/assets/agent_logs_console.png)
+![2. Request Console Target Overrides Envelope](docs/assets/coordinated_agent_payload.png)
 <!-- slide -->
-![3. Grounded YoY Financial Table](docs/assets/agent_comparison_table.png)
+![3. Grounded YoY Financial revenue Table](docs/assets/coordinated_agent_table.png)
 ````
 
 ---
 
-## 🎥 Unified Agentic Exploration Video Record
+## 🎥 Unified Coordinated Exploration Video Record
 
-The complete, live browser validation session tracing the coordinated space flow (toggling modes, verifying dynamic GCS indexes collections, submitting engine discovery, monitoring real-time tool calling warnings in balloons, submitting YoY comparisons prompts, and tracking raw python runner event logs) has been recorded:
+The complete, live browser validation session tracing the Coordinated App Selection flow (toggling modes, selecting `gemini-enterprise-e2e` index, inspecting GCS datastores list cards, submitting Alphabet comparative prompts, tracking targeted request system envelopes inside REST console log terminals, streaming real-time tool calling badges, outputting YoY comparative revenues grids, switching to autonomous agent room, and toggling back to direct search explorers) was recorded:
 
-![ADK Space Coordinator Agent Exploration Session Recording](docs/assets/adk_agentic_coordinator_demo.webp)
+![Coordinated App Selection Session Recording Walkthrough](docs/assets/coordinated_agent_demo.webp)
 
 ---
 

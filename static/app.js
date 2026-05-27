@@ -34,9 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Spaces navigation selectors
     const navBtnDirect = document.getElementById("nav-btn-direct");
     const navBtnAgentic = document.getElementById("nav-btn-agentic");
-    const directEnginesModule = document.getElementById("direct-engines-module");
-    const agenticCoordinatorModule = document.getElementById("agentic-coordinator-module");
+    const coordinatorAgentCard = document.getElementById("coordinator-agent-card");
     const coordinatorCard = document.getElementById("coordinator-card");
+    const enginesDeckTitle = document.getElementById("engines-deck-title");
 
     // Citation Hovercard selectors
     const hovercard = document.getElementById("citation-hovercard");
@@ -176,20 +176,39 @@ document.addEventListener("DOMContentLoaded", () => {
         // Render data stores list under Developer panel
         renderEngineDataStores(eng.data_store_ids);
         
-        // Update header details
-        chatHeaderName.textContent = eng.display_name;
-        chatHeaderDesc.textContent = `Engine ID: ${eng.id} | Solution Type: ${eng.solution_type.replace("SOLUTION_TYPE_", "")}`;
-        
-        // Enable typing controller inputs
-        chatInputBar.classList.remove("disabled");
-        inputQuery.disabled = false;
-        inputQuery.placeholder = `Ask ${eng.display_name} anything...`;
-        btnSend.disabled = false;
-        quickPromptsBar.classList.remove("hidden");
-        
-        // Setup fresh session automatically if no session has been loaded
-        if (!activeSessionPath || conversations[activeSessionPath]?.engineId !== eng.id) {
-            setupNewSession();
+        if (currentActiveMode === "agentic") {
+            // Update coordinated headers (purple accented agent mode!)
+            chatHeaderName.textContent = "Space Hub AI Coordinator";
+            chatHeaderDesc.textContent = `Coordinating: ${eng.display_name} | Target Engine ID: ${eng.id}`;
+            
+            // Enable typing controller inputs
+            chatInputBar.classList.remove("disabled");
+            inputQuery.disabled = false;
+            inputQuery.placeholder = `Ask the Space Hub Coordinator about search space ${eng.display_name}...`;
+            btnSend.disabled = false;
+            quickPromptsBar.classList.remove("hidden");
+            
+            // Setup fresh session automatically if no session has been loaded
+            const targetEngineIdKey = `space_hub_coordinator__${eng.id}`;
+            if (!activeSessionPath || conversations[activeSessionPath]?.engineId !== targetEngineIdKey) {
+                setupNewSession();
+            }
+        } else {
+            // Standard Direct Search Mode Setup
+            chatHeaderName.textContent = eng.display_name;
+            chatHeaderDesc.textContent = `Engine ID: ${eng.id} | Solution Type: ${eng.solution_type.replace("SOLUTION_TYPE_", "")}`;
+            
+            // Enable typing controller inputs
+            chatInputBar.classList.remove("disabled");
+            inputQuery.disabled = false;
+            inputQuery.placeholder = `Ask ${eng.display_name} anything...`;
+            btnSend.disabled = false;
+            quickPromptsBar.classList.remove("hidden");
+            
+            // Setup fresh session automatically if no session has been loaded
+            if (!activeSessionPath || conversations[activeSessionPath]?.engineId !== eng.id) {
+                setupNewSession();
+            }
         }
     }
 
@@ -303,16 +322,30 @@ document.addEventListener("DOMContentLoaded", () => {
         
         activeSessionPath = sessionPath;
         
-        if (currentActiveMode === "agentic") {
-            selectCoordinatorAgent();
+        const engineId = session.engineId;
+        if (engineId && engineId.startsWith("space_hub_coordinator__")) {
+            // 1. Recover Room Mode state to AI Coordinator!
+            setRoomMode("agentic");
+            
+            const targetEngineId = engineId.split("__")[1];
+            if (targetEngineId === "generic") {
+                selectCoordinatorAgent();
+            } else {
+                // Find correct engine card and select it under Coordinated mode!
+                const engCard = document.querySelector(`.engine-card[id$="${targetEngineId}"]`);
+                if (engCard) {
+                    const engineName = engCard.querySelector(".engine-card-title").textContent;
+                    selectEngine({ id: targetEngineId, display_name: engineName, solution_type: "SOLUTION_TYPE_SEARCH" });
+                }
+            }
         } else {
-            // Find correct engine card on left side
-            const engCard = document.querySelector(`.engine-card[id$="${session.engineId}"]`);
+            // 2. Recover Room Mode state to Direct Search!
+            setRoomMode("direct");
+            
+            const engCard = document.querySelector(`.engine-card[id$="${engineId}"]`);
             if (engCard) {
-                // Find engine definition mock block to auto-select
-                const engineId = session.engineId;
                 const engineName = engCard.querySelector(".engine-card-title").textContent;
-                selectEngine({ id: engineId, display_name: engineName, solution_type: "SOLUTION_TYPE_SEARCH", industry_vertical: "GENERIC" });
+                selectEngine({ id: engineId, display_name: engineName, solution_type: "SOLUTION_TYPE_SEARCH" });
             }
         }
         
@@ -434,8 +467,17 @@ document.addEventListener("DOMContentLoaded", () => {
             // For ADK local runner, we map a unique local session ID hash
             const resolvedSessionId = activeSessionPath || `session_hash_${Math.random().toString(36).substring(2, 15)}`;
             
+            let sseQueryText = query;
+            if (currentActiveMode === "agentic" && activeEngine.id !== "space_hub_coordinator") {
+                // Inject target coordinated engine envelope to focus the ADK Agent!
+                sseQueryText = 
+                    `[System Context: You are currently connected to the search engine '${activeEngine.display_name}' (ID: '${activeEngine.id}'). ` +
+                    `Your answers MUST be strictly grounded on documents inside this engine data stores. Always query this engine ID for all search tools executions!]\n\n` +
+                    `User Query: ${query}`;
+            }
+            
             const payload = currentActiveMode === "agentic" ? {
-                query: query,
+                query: sseQueryText,
                 session_id: resolvedSessionId
             } : {
                 engine_id: activeEngine.id,
@@ -571,9 +613,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     activeSessionIdText.textContent = path.split("/").pop();
                     
                     // Initialize empty session history loop
+                    const savedEngineIdKey = currentActiveMode === "agentic"
+                        ? `space_hub_coordinator__${activeEngine.id === "space_hub_coordinator" ? "generic" : activeEngine.id}`
+                        : activeEngine.id;
+                        
                     conversations[activeSessionPath] = {
                         title: query.slice(0, 32) + (query.length > 32 ? "..." : ""),
-                        engineId: activeEngine.id,
+                        engineId: savedEngineIdKey,
                         turns: []
                     };
                 }
@@ -1240,19 +1286,33 @@ document.addEventListener("DOMContentLoaded", () => {
        🤖 SPACES ROOMS NAVIGATION & AI COORDINATOR CONTROLLERS
        ========================================================================== */
 
-    // 1. Setup Spaces Room Mode Navigator Switcher
+    // 1. Setup Rooms Mode transition helper
+    function setRoomMode(mode) {
+        currentActiveMode = mode;
+        if (mode === "direct") {
+            navBtnDirect.classList.add("active");
+            navBtnAgentic.classList.remove("active");
+            coordinatorAgentCard.classList.add("hidden");
+            enginesDeckTitle.textContent = "Discovered Engines";
+            
+            // Re-point active conversations dictionary
+            conversations = conversationsDirect;
+        } else {
+            navBtnAgentic.classList.add("active");
+            navBtnDirect.classList.remove("active");
+            coordinatorAgentCard.classList.remove("hidden");
+            enginesDeckTitle.textContent = "Search Spaces Index";
+            
+            // Re-point conversations reference
+            conversations = conversationsAgentic;
+        }
+    }
+
+    // 2. Setup Spaces Room Mode Navigator Switcher triggers
     navBtnDirect.addEventListener("click", () => {
         if (currentActiveMode === "direct") return;
         
-        currentActiveMode = "direct";
-        navBtnDirect.classList.add("active");
-        navBtnAgentic.classList.remove("active");
-        
-        directEnginesModule.classList.remove("hidden");
-        agenticCoordinatorModule.classList.add("hidden");
-        
-        // Re-point active conversations reference
-        conversations = conversationsDirect;
+        setRoomMode("direct");
         
         // Auto select first engine in discovered list card (if any exist)
         const firstCard = enginesList.querySelector(".engine-card");
@@ -1271,17 +1331,9 @@ document.addEventListener("DOMContentLoaded", () => {
     navBtnAgentic.addEventListener("click", () => {
         if (currentActiveMode === "agentic") return;
         
-        currentActiveMode = "agentic";
-        navBtnAgentic.classList.add("active");
-        navBtnDirect.classList.remove("active");
+        setRoomMode("agentic");
         
-        agenticCoordinatorModule.classList.remove("hidden");
-        directEnginesModule.classList.add("hidden");
-        
-        // Re-point conversations reference
-        conversations = conversationsAgentic;
-        
-        // Select our Coordinator Agent!
+        // Auto select the main autonomous coordinator agent on click!
         selectCoordinatorAgent();
         
         renderSessionsList();
@@ -1293,7 +1345,7 @@ document.addEventListener("DOMContentLoaded", () => {
         selectCoordinatorAgent();
     });
 
-    // 2. Select and initialize the Virtual AI Coordinator agent
+    // 3. Select and initialize the Virtual AI Coordinator agent
     function selectCoordinatorAgent() {
         // Highlights coordinator card glowing purple!
         document.querySelectorAll(".engine-card").forEach(el => el.classList.remove("active"));
@@ -1316,11 +1368,12 @@ document.addEventListener("DOMContentLoaded", () => {
         btnSend.disabled = false;
         quickPromptsBar.classList.remove("hidden");
         
-        // Render discovered database list inside Grounded Sources dev panel!
+        // Render ALL project databases inside Grounded Sources dev panel!
         renderEngineDataStores(discoveredEnginesArray.map(e => e.data_store_ids).flat());
         
         // Setup fresh local session path automatically if no session loaded
-        if (!activeSessionPath || conversations[activeSessionPath]?.engineId !== activeEngine.id) {
+        const genericEngineIdKey = "space_hub_coordinator__generic";
+        if (!activeSessionPath || conversations[activeSessionPath]?.engineId !== genericEngineIdKey) {
             setupNewSession();
         }
     }

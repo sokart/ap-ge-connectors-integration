@@ -8,11 +8,11 @@ Built with a **FastAPI Backend-for-Frontend (BFF)** proxy architecture, a **Goog
 
 ---
 
-## 📸 Dual-Mode Interactive Chat Interfaces
+## 📸 Coordinated Multi-Engine Chat Dashboards
 
-| 📦 Discovered Data Stores Index Panel | 🛠️ Live Coordinated Python Event Stream |
+| 📦 Grounded Data Stores Panel | 🛠️ Highlighted Target Override Payload |
 | :--- | :--- |
-| ![Engine Grounded index Panel](docs/assets/dev_console_datastores_list.png) | ![Agent Logs and Terminals Console](docs/assets/agent_logs_console.png) |
+| ![Grounded Data Stores Panel](docs/assets/coordinated_agent_datastores.png) | ![REST HTTP Logs Panel](docs/assets/coordinated_agent_payload.png) |
 
 ---
 
@@ -20,9 +20,9 @@ Built with a **FastAPI Backend-for-Frontend (BFF)** proxy architecture, a **Goog
 
 The visual verification walkthrough sequence is documented under **[WALKTHROUGH.md](file:///Users/sokratis/Documents/Code/0_playground/WALKTHROUGH.md)**. 
 
-Open **[adk_agentic_coordinator_demo.webp](file:///Users/sokratis/Documents/Code/0_playground/docs/assets/adk_agentic_coordinator_demo.webp)** to see the animation of our local ADK coordinator agent stream: toggling modes, verifying dynamically connected GCS databases lists, submitting discovery queries, watching tool calls trigger in real-time, outputting comparative revenue tables, and tracking actual python Event dictionaries in console terminals live!
+Open **[coordinated_agent_demo.webp](file:///Users/sokratis/Documents/Code/0_playground/docs/assets/coordinated_agent_demo.webp)** to see the animation of our local target coordinated agent stream: toggling modes, selecting `gemini-enterprise-e2e` card under agent mode, verifying dynamic data stores collections uncollapse, submitting earnings comparative prompts, tracking targeted request system envelopes inside REST console request log terminals, streaming dynamic tool warning badges, and outputting YoY comparative revenues tables!
 
-![ADK Space Coordinator Agentic stream Recording](docs/assets/adk_agentic_coordinator_demo.webp)
+![ADK Coordinated App Selection stream Recording](docs/assets/coordinated_agent_demo.webp)
 
 ---
 
@@ -80,73 +80,165 @@ To securely parse and syntax-color JSON strings and payloads without using hazar
 
 ## 🔑 Authentication Infrastructure Details
 
+To guarantee 100% security, Assistant Space Hub manages authentication in two distinct layers depending on the active stage (Local Sandbox vs Production Platform).
+
+### 1. Local Development Sandbox Authentication (Active Now)
+When running the application locally on your workstation, authentication is facilitated via **Application Default Credentials (ADC)**. 
+
 ```
-  [Browser Client space]        |         [Secure BFF Local Sandbox]        |        [GCP Endpoint]
-                                |                                           |
-  +-----------------------+     |      +------------------------------+     |    +---------------------+
-  |   app.js Dashboard    |     |      |          server.py           |     |    | Discovery Engine API|
-  |                       |     |      |                              |     |    |                     |
-  |  Submit Chat Query    | --- | ---> | POST /api/chat               |     |    | streamAssist REST   |
-  |  (100% Token Safe)    |     |      |  (Direct engine routes)      |     |    |                     |
-  |                       |     |      |                              |     |    |                     |
-  |  Conversational Agent | --- | ---> | POST /api/agent/chat         |     |    | Gemini LLM API      |
-  |  (Agentic Switches)   |     |      |  (ADK local InMemoryRunner)  |     |    |                     |
-  |                       |     |      |                              |     |    |                     |
-  |  Observes Masked Logs | < - | - -  | AuthorizedSession (ADC token)| --- | -> | Transcoded Streams  |
-  |  & Live SSE Channels  |     |      |  * Signs GCP requests:       |     |    |  * Compact Bytes    |
-  |                       |     |      |    Authorization: Bearer     |     |    |                     |
-  +-----------------------+     |      +------------------------------+     |    +---------------------+
-                                |                                           |
+  [Local Workstation CLI]              |      [FastAPI BFF Server Sandbox]      |       [Google Cloud Platform]
+                                       |                                        |
+  1. developer$ gcloud auth login      |                                        |
+  2. developer$ gcloud auth application-default login                           |
+     (Writes credentials token locally to:                                      |
+      ~/.config/gcloud/application_default_credentials.json)                    |
+                                       |                                        |
+                                       |   3. google.auth.default()             |
+                                       |      (Locates and loads ADC JSON)      |
+                                       |                                        |
+                                       |   4. AuthorizedSession(credentials)    |
+                                       |      (Generates/refreshes Bearer OAuth)|
+                                       |      * signs outgoing REST requests    |
+                                       |                                        |
+                                       |   5. ADK models / streamAssist         | -- [Signs with Bearer Token] -> Discovery Engine
+                                       |      (Routes API calls securely)       |
 ```
 
-### 1. Application Default Credentials (ADC) Resolver
-In **[server.py:L31](file:///Users/sokratis/Documents/Code/0_playground/server.py#L31)**:
-```python
-credentials, GCP_PROJECT_ID = google.auth.default()
-session = AuthorizedSession(credentials)
-```
-*   The `google.auth.default()` subroutine automatically checks local setups sequentially:
-    1.  `GOOGLE_APPLICATION_CREDENTIALS` environment variable (service account key location).
-    2.  User identity authentication profile authorized locally via CLI command: `gcloud auth application-default login`.
-    3.  Metadata service attached to cloud compute environments (Cloud Run service accounts).
-*   The `AuthorizedSession` transport wraps HTTP request pooling under the hood, managing OAuth 2.0 access tokens lifespans and **signing requests with active GCP Bearer Tokens** securely on the server side:
-    `Authorization: Bearer <access_token>`
+*   **ADC Resolution**: Inside **[server.py:L31](file:///Users/sokratis/Documents/Code/0_playground/server.py#L31)**:
+    ```python
+    credentials, GCP_PROJECT_ID = google.auth.default()
+    session = AuthorizedSession(credentials)
+    ```
+    The `google.auth.default()` method searches your workstation's system parameters sequentially:
+    1.  `GOOGLE_APPLICATION_CREDENTIALS` env variable path.
+    2.  The global workstation gcloud configuration location (`~/.config/gcloud/application_default_credentials.json` which you authorize via terminal!).
+    3.  Metadata service attributes (when hosted on App Engine or Cloud Run).
+*   **Token Refresh & Cryptographic Signing**: The local FastAPI server uses `AuthorizedSession` to manage token lifespans. It dynamically requests standard OAuth 2.0 access token refreshes behind the scenes, and signs every search index request securely on the server side:
+    `Authorization: Bearer <GCP_ACCESS_TOKEN>`
+    No keys are ever stored or exposed inside the client dashboard browser memory.
 
-### 2. Google GenAI SDK Vertex AI Backend Routing
-To authorize the local ADK `InMemoryRunner` model bindings without requiring manual private API keys:
-We globally map standard environment variables on backend startups, forcing the new GenAI SDK transport layers to route calls securely under your GCP authenticated profile access scopes:
+### 2. Google GenAI SDK Vertex AI Integration
+To validate and run our local ADK `InMemoryRunner` coordinator agent model calls without needing a separate manual `api_key` environment variable:
+We map the resolved credentials project and location parameters directly inside **[server.py](file:///Users/sokratis/Documents/Code/0_playground/server.py#L42-L46)**. This forces Google's new GenAI SDK transport layers to automatically authorize model queries under your workstation's authenticated GCP access rights:
 ```python
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
 os.environ["GOOGLE_CLOUD_PROJECT"] = GCP_PROJECT_ID
 os.environ["GOOGLE_CLOUD_LOCATION"] = "us-central1"
 ```
 
-### 3. Multi-User Enterprise Authorization Map (Production Path)
-To scale this sandbox dashboard to an online multi-tenant enterprise portal, OAuth 2.0 delegation maps user access directly:
-1.  **OpenID Connect Identity (SSO)**: Authenticates users via your GSuite identity client. BFF stores identity details in a secure `HttpOnly; Secure; SameSite=Strict` cookie, preventing client-side reading.
-2.  **Delegation Authorization Flow**: BFF executes a Google OAuth Authorization Code flow when users connect, requesting cloud access scopes.
-3.  **User Scopes Access Resolution**: Instead of utilizing high-privilege server service accounts, user actions map to the user's personal delegates token. Google's API then evaluates Discovery Engine permissions strictly based on the **user's active GSuite access rights**, ensuring standard resource separation.
+### 3. Multi-User Production Authentication Scaling
+To scale this development dashboard to an online multi-tenant enterprise portal, authorization is managed using standard **3-Legged OAuth 2.0 delegation**:
+
+```
+  [Browser Client space]        |         [Secure BFF Backend Server]        |        [GCP IAM / OAuth Broker]
+                                |                                            |
+  1. Click 'Authenticate Platform'                                           |
+  2. Opens Consent Popup - - - - - - - - - - - - - - - - - - - - - - - - - - - - - > Authenticates credentials
+                                |                                            |       & requests authorization scopes
+  3. Grant Authorization - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - [User Consents]
+                                |                                            |             |
+  4. Callback Redirect carrying |                                            |             v
+     auth code '?code=xyz' - -  | - - - - - - - - - - - - - - - - - - - - - - - - -  Returns Code 'xyz'
+                                |                                            |
+                                |  5. Exchange auth code 'xyz' server-side:  |
+                                |     POST /credentials:finalize  - - - - - - - - > Validates and stores secure
+                                |                                            |       User-Delegate Bearer Token
+                                |                                            |
+                                |  6. Reads User-Delegate Token from Vault   |
+                                |  7. signs LLM / Search API requests        | -- [Signs with User Delegate] -> Search API
+```
+
+1.  **Identity Assertion (SSO)**: The user signs into the portal via an IDP client (like Google Workspace OIDC). The backend saves user details in an encrypted cookie with settings `HttpOnly; Secure; SameSite=Strict`.
+2.  **Consent Popup Authorization**: The dashboard intercepts credentials requests, opening a popup window directing the user to the Google OAuth consent form.
+3.  **Auth Code Exchange Flow**: Upon user consent, the callback redirects the browser to the backend callback redirect endpoint carrying an authorization code `?code=abc`.
+4.  **Finalize Credentials Vaulting**: The secure BFF server grabs the code and submits a secure server-side POST request calling the Google IAM Connector Credentials API `finalize` endpoint. This exchanges the code for a **User-Delegate Token** which is safely stored inside a secure credentials vault (like GCP Secret Manager).
+5.  **User Scopes Boundary Enforcement**: When the ADK agent triggers a search tool, the BFF retrieves that specific user's delegate token from the vault. Outgoing API requests are signed utilizing the *user's personal token*. The Google Search engines then evaluate document permissions strictly against that *user's specific GSuite access rights* (not the server's service accounts!), ensuring strict enterprise context isolation.
 
 ---
 
-## 🏁 Quick Start Guide
+## 🏁 Step-by-Step Run Guide
 
-### 1. Authenticate GCP Environment
-Ensure you have active credential access mapped inside your terminal:
+Follow these simple, clear terminal commands to boot and test the entire full-stack solution locally.
+
+### 📋 System Prerequisites
+Before booting, verify that your local machine has the following tools active:
+*   **Python 3.10** or higher (verify via: `python3 --version`).
+*   **Google Cloud SDK** (verify via: `gcloud --version`).
+*   An active Google Cloud project with the **Discovery Engine API** enabled and at least one Search or Chat engine configured (which you can discover using this dashboard!).
+
+---
+
+### 1. Authenticate your Workstation
+Map your personal credentials profile to the terminal so the server and local tests can resolve GCP authentication.
+
+Run these commands in your shell terminal:
 ```bash
+# 1. Authorize your main terminal account
 gcloud auth login
+
+# 2. IMPORTANT: Establish local Application Default Credentials (ADC) tokens file
 gcloud auth application-default login
+
+# 3. Target the active project ID where engines reside
 gcloud config set project sokratis-genai-bb
 ```
+*Note: The second command launches a browser tab asking you to sign in. Granting access writes a local JSON token that allows Python libraries to safely connect without manual secret keys.*
 
-### 2. Start BFF Backend Server
-Ensure Python packages are installed, and launch server:
+---
+
+### 2. Install Python Packages
+Navigate to the project root workspace directory, and install all required framework dependencies:
 ```bash
 pip install fastapi uvicorn google-auth google-cloud-discoveryengine google-genai google-adk requests
-python3 server.py
 ```
 
-### 3. Open Exploration Spaces
-1.  Launch your browser and load: **[http://127.0.0.1:8080](http://127.0.0.1:8080)**.
-2.  Toggle the sidebar selector between **🧭 Direct Search** and **🤖 AI Coordinator** tabs!
-3.  Type comparative prompts (e.g. asking the Coordinator to compare Alphabet revenues), and watch tools trigger dynamically in your console!
+---
+
+### 3. Start the BFF Backend Server
+Run the FastAPI web backend server process. Uvicorn will load, authenticate credentials, spin up local ADK models model context wrappers, and host static web dashboard assets:
+```bash
+python3 server.py
+```
+You should see these logging outputs in your terminal:
+```
+INFO:BFF_Server:Successfully authenticated server for GCP Project: sokratis-genai-bb
+INFO:BFF_Server:Initializing Vertex AI SDK globally. Project: sokratis-genai-bb...
+INFO:BFF_Server:Instantiating local InMemoryRunner mapping for ADK Coordinator agent...
+INFO:     Started server process [9137]
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
+```
+*Note: The server is bound strictly to localhost interface `127.0.0.1:8080` for secure local port sandbox containment.*
+
+---
+
+### 4. Open the Web Dashboard Panel
+1.  Launch your browser and navigate to: **[http://127.0.0.1:8080](http://127.0.0.1:8080)**.
+2.  Observe the header: connection badge displays a green `Connected` pulsing orb and displays project `sokratis-genai-bb`.
+3.  Choose your room exploration mode at the top left toggle headers:
+    *   **🧭 Direct Search**: Talks to search engines directly. Select `gemini-enterprise-e2e` in the sidebar and enter search prompts to explore grounding citations drawers popups and raw REST terminals logs.
+    *   **🤖 AI Coordinator**: Talks to the advanced coordinated agent.
+        *   *Autonomous Mode*: Click `Space Hub AI Coordinator` agent card in the sidebar. Enter general prompts (e.g. asking to summarize your search engines), and watch the agent use dynamic tools autonomously in the background!
+        *   *Targeted Mode*: Click any discovered engine card below the agent card (e.g., `gemini-enterprise-e2e`) while in the Coordinator room. The agent header updates and locks the coordinator's reasoning scope specifically targeting that index!
+4.  Toggle **`🛠️ Developer Trace Mode`** on the top right header to uncollapse visual logs terminals mapping live HTTP Request payloads and Event chunks scrolling logs.
+
+---
+
+### 5. Run a CLI ADK Agent Verification Test
+If you prefer to run and test the new conversational ADK Agent directly from your terminal console without launching any web browsers:
+
+Open a separate terminal window, navigate to the project directory, and run the verified scratch runner:
+```bash
+python3 scratch/test_adk_agent.py
+```
+This runs the local `InMemoryRunner` loop, submits an engine-discovery prompt, and prints out the conversational responses, tools calls parameters, and raw python GenAI event dictionary segments on your terminal in real-time!
+```
+INFO:google_adk.google.adk.models.google_llm:Sending out request, model: gemini-2.0-flash-001...
+Greetings! I am the Space Hub AI Coordinator...
+
+[AGENT INTERMEDIATE DECISION] Tool Call triggered: list_available_search_engines
+Arguments payload: {}
+
+*   gemini-enterprise-e2e: (`gemini-enterprise-e2e_1779876734248`) - Data store connected is e2e-bucket.
+...
+```
