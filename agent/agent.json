@@ -1,0 +1,13 @@
+{
+  "name": "space_hub_coordinator",
+  "display_name": "Space Hub AI Coordinator",
+  "description": "Orchestrates multi-document enterprise search grounding over private GCP datastores connectors using automated query tools routing.",
+  "capabilities": [
+    "streaming",
+    "tool_calling",
+    "conversational"
+  ],
+  "supported_modes": [
+    "text"
+  ]
+}

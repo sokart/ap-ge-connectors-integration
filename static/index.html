@@ -57,11 +57,33 @@
                     <span>New Exploration Session</span>
                 </button>
 
-                <!-- 1. GCP Engine Discovery Module -->
-                <div class="sidebar-section">
+                <!-- Spaces Navigator Switcher -->
+                <div class="spaces-navigator">
+                    <button id="nav-btn-direct" class="nav-space-btn active" data-space="direct">
+                        <span>🧭 Direct Search</span>
+                    </button>
+                    <button id="nav-btn-agentic" class="nav-space-btn" data-space="agentic">
+                        <span>🤖 AI Coordinator</span>
+                    </button>
+                </div>
+
+                <!-- 1. GCP Engine Discovery Module (Direct Search Mode) -->
+                <div id="direct-engines-module" class="sidebar-section">
                     <h2 class="section-title">Discovered Engines</h2>
                     <div id="engines-list" class="engines-list">
                         <div class="list-placeholder">Discovering engines in your project...</div>
+                    </div>
+                </div>
+
+                <!-- 1. ADK Agent Coordinator Module (Agentic Orchestrator Mode) -->
+                <div id="agentic-coordinator-module" class="sidebar-section hidden">
+                    <h2 class="section-title">AI Orchestrator</h2>
+                    <div id="coordinator-card" class="engine-card coordinator-card active">
+                        <div class="engine-card-header">
+                            <div class="engine-card-title">Space Hub AI Coordinator</div>
+                            <span class="engine-card-badge status-pulse">Agent</span>
+                        </div>
+                        <div class="engine-card-id">Orchestrates, resolves, and grounds queries across multiple corporate search spaces.</div>
                     </div>
                 </div>
 

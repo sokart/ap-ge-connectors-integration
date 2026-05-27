@@ -11,6 +11,15 @@ import google.auth
 from google.auth.transport.requests import AuthorizedSession
 from google.cloud import discoveryengine_v1beta as discoveryengine
 
+import os
+# Force Google GenAI SDK and ADK to route via Google Cloud Vertex AI backend
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
+
+import vertexai
+from google.adk.runners import InMemoryRunner
+from google.genai import types
+from agent import space_hub_agent
+
 # Setup secure logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("BFF_Server")
@@ -36,6 +45,20 @@ except Exception as e:
     logger.error(f"Failed to initialize GCP authentication: {e}")
     GCP_PROJECT_ID = None
     session = None
+
+# Initialize Vertex AI context and ADK runner locally
+adk_runner = None
+if GCP_PROJECT_ID:
+    os.environ["GOOGLE_CLOUD_PROJECT"] = GCP_PROJECT_ID
+    os.environ["GOOGLE_CLOUD_LOCATION"] = "us-central1"
+    try:
+        logger.info(f"Initializing Vertex AI SDK globally. Project: {GCP_PROJECT_ID}...")
+        vertexai.init(project=GCP_PROJECT_ID, location="us-central1")
+        
+        logger.info("Instantiating local InMemoryRunner mapping for ADK Coordinator agent...")
+        adk_runner = InMemoryRunner(agent=space_hub_agent)
+    except Exception as exc:
+        logger.error(f"Failed to initialize Vertex AI / ADK Runner context: {exc}")
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
@@ -273,6 +296,133 @@ async def chat(request: Request):
         )
     except Exception as e:
         logger.error(f"Error initiating chat streaming: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def adk_agent_stream_generator(query: str, session_id: str):
+    """
+    Executes the local ADK Space Coordinator Agent and transcodes its events into SSE streaming format.
+    """
+    if not GCP_PROJECT_ID:
+        yield f"event: error\ndata: {json.dumps({'message': 'GCP authentication uninitialized'})}\n\n"
+        yield "event: done\ndata: {}\n\n"
+        return
+        
+    # Standard sanitization
+    query = re.sub(r'[\r\n\t]', ' ', query).strip()
+    
+    # 1. Pre-create the session state locally if it is a new session
+    try:
+        session = await adk_runner.session_service.get_session(
+            app_name=adk_runner.app_name,
+            user_id="user_developer",
+            session_id=session_id
+        )
+        if not session:
+            await adk_runner.session_service.create_session(
+                app_name=adk_runner.app_name,
+                user_id="user_developer",
+                session_id=session_id
+            )
+            logger.info(f"Established fresh ADK Agent session: {session_id}")
+    except Exception as e:
+        logger.error(f"Failed to load or establish ADK session: {e}")
+        yield f"event: error\ndata: {json.dumps({'message': f'Session initialization error: {e}'})}\n\n"
+        yield "event: done\ndata: {}\n\n"
+        return
+        
+    # 2. Structure user message payload using google.genai specs
+    user_msg = types.Content(
+        role="user",
+        parts=[types.Part(text=query)]
+    )
+    
+    # 3. Yield mock headers metadata log immediately to terminal log
+    headers_masked = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer [MASKED_ADK_RUNNER_CREDENTIALS]"
+    }
+    raw_req_metadata = {
+        "method": "POST",
+        "url": "http://127.0.0.1:8080/api/agent/chat (ADK Local Runner)",
+        "headers": headers_masked,
+        "payload": {
+            "agent": "space_hub_coordinator",
+            "user_id": "user_developer",
+            "session_id": session_id,
+            "query": query
+        }
+    }
+    yield f"event: raw_request\ndata: {json.dumps(raw_req_metadata)}\n\n"
+    
+    try:
+        # 4. Trigger runner stream session
+        events = adk_runner.run_async(
+            user_id="user_developer",
+            session_id=session_id,
+            new_message=user_msg
+        )
+        
+        # 5. Consume stream events progressively
+        async for event in events:
+            # Yield raw chunk event to the response terminal log!
+            event_dict = event.model_dump(mode="json") if hasattr(event, "model_dump") else str(event)
+            yield f"event: raw_response_chunk\ndata: {json.dumps({'chunk': json.dumps(event_dict)})}\n\n"
+            
+            content = getattr(event, "content", None)
+            if not content:
+                continue
+                
+            parts = getattr(content, "parts", [])
+            for part in parts:
+                part_dict = part.model_dump() if hasattr(part, "model_dump") else part
+                
+                # Case A: Standard text chunk streaming
+                if "text" in part_dict and part_dict["text"]:
+                    yield f"event: chunk\ndata: {json.dumps({'text': part_dict['text']})}\n\n"
+                    
+                # Case B: Dynamic Tool call triggers! (Render as status warnings chips)
+                elif "function_call" in part_dict and part_dict["function_call"]:
+                    fc = part_dict["function_call"]
+                    tool_name = fc.get("name", "unknown")
+                    tool_args = fc.get("args", {})
+                    warning_msg = f"🤖 Space Hub Coordinator: [Invoking Tool: '{tool_name}' with payload: {json.dumps(tool_args)}]"
+                    yield f"event: warning\ndata: {json.dumps({'message': warning_msg})}\n\n"
+                    
+        # Yield metadata tracking closing block
+        meta_info = {
+            "session": f"projects/{GCP_PROJECT_ID}/locations/global/collections/default_collection/engines/space_hub_coordinator/sessions/{session_id}",
+            "citations": []
+        }
+        yield f"event: metadata\ndata: {json.dumps(meta_info)}\n\n"
+        yield "event: done\ndata: {}\n\n"
+        
+    except Exception as e:
+        logger.exception("ADK stream generator failed:")
+        yield f"event: error\ndata: {json.dumps({'message': f'ADK Runner Error: {str(e)}'})}\n\n"
+        yield "event: done\ndata: {}\n\n"
+
+@app.post("/api/agent/chat")
+async def agent_chat(request: Request):
+    """
+    POST API that initiates streaming chat with the local ADK Agent, yielding real-time SSE.
+    """
+    try:
+        body = await request.json()
+        query = body.get("query")
+        session_id = body.get("session_id")
+        
+        if not query or not session_id:
+            raise HTTPException(status_code=400, detail="query and session_id are required parameters.")
+            
+        if not adk_runner:
+            raise HTTPException(status_code=500, detail="ADK local runner context is uninitialized.")
+            
+        return StreamingResponse(
+            adk_agent_stream_generator(query, session_id),
+            media_type="text/event-stream"
+        )
+    except Exception as e:
+        logger.error(f"Error initiating agent chat streaming: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Mount static web app directory containing index.html, style.css, app.js

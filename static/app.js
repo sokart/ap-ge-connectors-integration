@@ -31,6 +31,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const termResponse = document.getElementById("term-response");
     const termStatusDot = document.getElementById("term-status-dot");
 
+    // Spaces navigation selectors
+    const navBtnDirect = document.getElementById("nav-btn-direct");
+    const navBtnAgentic = document.getElementById("nav-btn-agentic");
+    const directEnginesModule = document.getElementById("direct-engines-module");
+    const agenticCoordinatorModule = document.getElementById("agentic-coordinator-module");
+    const coordinatorCard = document.getElementById("coordinator-card");
+
     // Citation Hovercard selectors
     const hovercard = document.getElementById("citation-hovercard");
     const hovercardTitle = document.getElementById("hovercard-title");
@@ -42,19 +49,41 @@ document.addEventListener("DOMContentLoaded", () => {
     // Global State management
     let activeProjectId = "";
     let activeEngine = null;
-    let activeSessionPath = null; // Session resource path on GCP
-    let conversations = {}; // In-memory session logs: { sessionPath: { title, engineId, turns: [ { role, text, citations, ... } ] } }
+    let activeSessionPath = null; // Session ID or Resource Path
+    let currentActiveMode = "direct"; // "direct" or "agentic"
+    
+    let conversationsDirect = {}; // Direct search history
+    let conversationsAgentic = {}; // Agentic coordinator history
+    let conversations = {}; // Active pointer reference
+    
     let hovercardTimeout = null;
-    let discoveredEnginesArray = []; // Tracks original engine listings data store mappings
+    let discoveredEnginesArray = []; // Mapped engines list cache
 
-    // Load active sessions from sessionStorage for premium state continuity
+    // Load active sessions from partitioned sessionStorage keys
     try {
-        const savedData = sessionStorage.getItem("space_hub_conversations");
-        if (savedData) {
-            conversations = JSON.parse(savedData);
+        const savedDataDirect = sessionStorage.getItem("space_hub_conversations_direct");
+        if (savedDataDirect) {
+            conversationsDirect = JSON.parse(savedDataDirect);
         }
+        const savedDataAgentic = sessionStorage.getItem("space_hub_conversations_agentic");
+        if (savedDataAgentic) {
+            conversationsAgentic = JSON.parse(savedDataAgentic);
+        }
+        conversations = conversationsDirect; // Pointer points to direct mode initially
     } catch (e) {
-        console.error("Failed to load saved sessions:", e);
+        console.error("Failed to load partitioned active sessions:", e);
+    }
+    
+    function saveSessionStorageData() {
+        try {
+            if (currentActiveMode === "direct") {
+                sessionStorage.setItem("space_hub_conversations_direct", JSON.stringify(conversationsDirect));
+            } else {
+                sessionStorage.setItem("space_hub_conversations_agentic", JSON.stringify(conversationsAgentic));
+            }
+        } catch (err) {
+            console.error("Failed to save partitioned session data:", err);
+        }
     }
 
     // Initialize application: Discover GCP engines and populate state
@@ -274,13 +303,17 @@ document.addEventListener("DOMContentLoaded", () => {
         
         activeSessionPath = sessionPath;
         
-        // Find correct engine card on left side
-        const engCard = document.querySelector(`.engine-card[id$="${session.engineId}"]`);
-        if (engCard) {
-            // Find engine definition mock block to auto-select
-            const engineId = session.engineId;
-            const engineName = engCard.querySelector(".engine-card-title").textContent;
-            selectEngine({ id: engineId, display_name: engineName, solution_type: "SOLUTION_TYPE_SEARCH", industry_vertical: "GENERIC" });
+        if (currentActiveMode === "agentic") {
+            selectCoordinatorAgent();
+        } else {
+            // Find correct engine card on left side
+            const engCard = document.querySelector(`.engine-card[id$="${session.engineId}"]`);
+            if (engCard) {
+                // Find engine definition mock block to auto-select
+                const engineId = session.engineId;
+                const engineName = engCard.querySelector(".engine-card-title").textContent;
+                selectEngine({ id: engineId, display_name: engineName, solution_type: "SOLUTION_TYPE_SEARCH", industry_vertical: "GENERIC" });
+            }
         }
         
         // Re-display badge
@@ -302,7 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Delete session from history mapping
     function deleteSession(sessionPath) {
         delete conversations[sessionPath];
-        sessionStorage.setItem("space_hub_conversations", JSON.stringify(conversations));
+        saveSessionStorageData();
         
         if (activeSessionPath === sessionPath) {
             activeSessionPath = null;
@@ -396,14 +429,24 @@ document.addEventListener("DOMContentLoaded", () => {
         
         // SSE Client Streaming connection logic
         try {
-            const response = await fetch("/api/chat", {
+            const targetUrl = currentActiveMode === "agentic" ? "/api/agent/chat" : "/api/chat";
+            
+            // For ADK local runner, we map a unique local session ID hash
+            const resolvedSessionId = activeSessionPath || `session_hash_${Math.random().toString(36).substring(2, 15)}`;
+            
+            const payload = currentActiveMode === "agentic" ? {
+                query: query,
+                session_id: resolvedSessionId
+            } : {
+                engine_id: activeEngine.id,
+                query: query,
+                session: activeSessionPath
+            };
+            
+            const response = await fetch(targetUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    engine_id: activeEngine.id,
-                    query: query,
-                    session: activeSessionPath
-                })
+                body: JSON.stringify(payload)
             });
             
             if (!response.ok) {
@@ -558,7 +601,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         warning: finalWarning
                     });
                     
-                    sessionStorage.setItem("space_hub_conversations", JSON.stringify(conversations));
+                    saveSessionStorageData();
                     renderSessionsList();
                 }
             }
@@ -1191,5 +1234,94 @@ document.addEventListener("DOMContentLoaded", () => {
         
         fragment.appendChild(formatNode(obj));
         return fragment;
+    }
+
+    /* ==========================================================================
+       🤖 SPACES ROOMS NAVIGATION & AI COORDINATOR CONTROLLERS
+       ========================================================================== */
+
+    // 1. Setup Spaces Room Mode Navigator Switcher
+    navBtnDirect.addEventListener("click", () => {
+        if (currentActiveMode === "direct") return;
+        
+        currentActiveMode = "direct";
+        navBtnDirect.classList.add("active");
+        navBtnAgentic.classList.remove("active");
+        
+        directEnginesModule.classList.remove("hidden");
+        agenticCoordinatorModule.classList.add("hidden");
+        
+        // Re-point active conversations reference
+        conversations = conversationsDirect;
+        
+        // Auto select first engine in discovered list card (if any exist)
+        const firstCard = enginesList.querySelector(".engine-card");
+        if (firstCard) {
+            firstCard.click();
+        } else {
+            activeEngine = null;
+            activeSessionPath = null;
+            sessionBadge.classList.add("hidden");
+            clearChatArea();
+        }
+        
+        renderSessionsList();
+    });
+    
+    navBtnAgentic.addEventListener("click", () => {
+        if (currentActiveMode === "agentic") return;
+        
+        currentActiveMode = "agentic";
+        navBtnAgentic.classList.add("active");
+        navBtnDirect.classList.remove("active");
+        
+        agenticCoordinatorModule.classList.remove("hidden");
+        directEnginesModule.classList.add("hidden");
+        
+        // Re-point conversations reference
+        conversations = conversationsAgentic;
+        
+        // Select our Coordinator Agent!
+        selectCoordinatorAgent();
+        
+        renderSessionsList();
+    });
+    
+    // Bind click directly on the coordinator agent card!
+    coordinatorCard.addEventListener("click", () => {
+        if (currentActiveMode !== "agentic") return;
+        selectCoordinatorAgent();
+    });
+
+    // 2. Select and initialize the Virtual AI Coordinator agent
+    function selectCoordinatorAgent() {
+        // Highlights coordinator card glowing purple!
+        document.querySelectorAll(".engine-card").forEach(el => el.classList.remove("active"));
+        coordinatorCard.classList.add("active");
+        
+        activeEngine = {
+            id: "space_hub_coordinator",
+            display_name: "Space Hub AI Coordinator",
+            solution_type: "ADK_AGENT"
+        };
+        
+        // Update workspace headers
+        chatHeaderName.textContent = "Space Hub AI Coordinator";
+        chatHeaderDesc.textContent = "Agent ID: space_hub_coordinator | Engine: Coordinated Orchestrator";
+        
+        // Unlock typing input textareas
+        chatInputBar.classList.remove("disabled");
+        inputQuery.disabled = false;
+        inputQuery.placeholder = "Ask the Space Hub AI Coordinator anything...";
+        btnSend.disabled = false;
+        quickPromptsBar.classList.remove("hidden");
+        
+        // Render discovered database list inside Grounded Sources dev panel!
+        renderEngineDataStores(discoveredEnginesArray.map(e => e.data_store_ids).flat());
+        
+        // Setup fresh local session path automatically if no session loaded
+        if (!activeSessionPath || conversations[activeSessionPath]?.engineId !== activeEngine.id) {
+            setupNewSession();
+        }
     }
 });

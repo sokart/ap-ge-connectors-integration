@@ -1480,3 +1480,92 @@ body {
 .console-number {
     color: #fbbf24;
 }
+
+/* ==========================================================================
+   🤖 Spaces Navigator Switcher & Coordinator Card Styles
+   ========================================================================== */
+
+.spaces-navigator {
+    display: flex;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--color-glass-border);
+    border-radius: 14px;
+    padding: 4px;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.nav-space-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid transparent;
+}
+
+.nav-space-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+#nav-btn-direct.active {
+    background: rgba(0, 210, 255, 0.08);
+    color: var(--color-blue);
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.12);
+    border-color: rgba(0, 210, 255, 0.18);
+}
+
+#nav-btn-agentic.active {
+    background: rgba(138, 35, 135, 0.12);
+    color: #c084fc;
+    box-shadow: 0 0 12px rgba(138, 35, 135, 0.18);
+    border-color: rgba(138, 35, 135, 0.3);
+}
+
+.coordinator-card {
+    border-left: 4px solid #8A2387 !important;
+    background: rgba(138, 35, 135, 0.03) !important;
+}
+
+.coordinator-card:hover {
+    background: rgba(138, 35, 135, 0.06) !important;
+    transform: translateX(3px);
+}
+
+.coordinator-card.active {
+    background: rgba(138, 35, 135, 0.08) !important;
+    border-color: rgba(138, 35, 135, 0.45) !important;
+    box-shadow: inset 0 0 12px rgba(138, 35, 135, 0.08), 0 0 20px rgba(138, 35, 135, 0.18) !important;
+}
+
+.coordinator-card .engine-card-badge {
+    background: rgba(138, 35, 135, 0.25) !important;
+    color: #f472b6 !important;
+}
+
+.status-pulse {
+    position: relative;
+    animation: badge-pulse 1.8s infinite alternate ease-in-out;
+}
+
+@keyframes badge-pulse {
+    0% {
+        box-shadow: 0 0 4px rgba(244, 114, 182, 0.25);
+        opacity: 0.85;
+    }
+    100% {
+        box-shadow: 0 0 12px rgba(244, 114, 182, 0.65);
+        opacity: 1;
+    }
+}
